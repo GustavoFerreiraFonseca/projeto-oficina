@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Batalha - 1v1 Arena</title>
     
+    <link rel="stylesheet" href="./css/style.css">
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     
@@ -18,24 +20,6 @@
     
     <script src="js/game.js" defer></script>
 
-    <style>
-        /* Isso garante que a página já nasça preta, eliminando o flash branco */
-        html, body {
-            margin: 0;
-            padding: 0;
-            background-color: #000000; 
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        #game-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-    </style>
 </head>
 <body>
     <div id="game-container"></div>

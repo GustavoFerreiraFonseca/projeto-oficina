@@ -1,0 +1,19 @@
+/* public/css/style.css */
+
+/* Garante que o fundo seja preto desde o início do carregamento */
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #000000; 
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Centraliza o container do jogo na tela */
+#game-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
