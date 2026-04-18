@@ -1,15 +1,29 @@
+// js/game.js
+
 const config = {
     type: Phaser.AUTO,
     parent: 'game-container',
-    width: 800,
-    height: 600,
+    // Pega a largura e altura real da janela do usuário
+    width: window.innerWidth, 
+    height: window.innerHeight,
+    scale: {
+        mode: Phaser.Scale.RESIZE, // O jogo se redimensiona se a janela mudar
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    },
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 0 } }
+        arcade: { gravity: { y: 0 }, debug: false }
     },
-    // Verifique se os nomes batem com os arquivos (Login com L maiúsculo)
     scene: [Login, MainMenu, Jogar, Lobby, GameScene, RankingScene, SettingsScene]
 };
 
 const game = new Phaser.Game(config);
+
+// Variáveis utilitárias para usarmos nas cenas
+// Elas sempre darão o centro real, não importa o monitor
+let larguraReal = window.innerWidth;
+let alturaReal = window.innerHeight;
+
 const socket = io();
+
+let nickUsuario = "";
