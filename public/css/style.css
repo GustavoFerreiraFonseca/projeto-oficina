@@ -1,19 +1,25 @@
-/* public/css/style.css */
-
-/* Garante que o fundo seja preto desde o início do carregamento */
-html, body {
+/* Definindo o fundo como preto, eliminando as margens e a barra de rolagem */
+html, body{
     margin: 0;
     padding: 0;
     background-color: #000000; 
     height: 100%;
     width: 100%;
     overflow: hidden;
+    user-select: none;                  /* Não permite que o usuário selecione elementos da minha tela */
+    -webkit-user-select: none;          /* Garante que o comando acima funcione em outros navegadores */
+    cursor: default;                    /* Deixa o cursor sempre com a seta padrão */
 }
 
-/* Centraliza o container do jogo na tela */
-#game-container {
+/* Uso de FlexBox para alinhar de maneira dinâmica e eficiente os elementos do jogo */
+#game-container{
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+}
+
+/* Elimina possíveis erros de alinhamento ao phaser desenhar o jogo */
+canvas{
+    display: block;
 }

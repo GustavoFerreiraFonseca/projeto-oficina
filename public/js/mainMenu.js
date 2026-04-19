@@ -17,8 +17,8 @@ class MainMenu extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(0, 0);
 
-        // 2. Título "COLISEU" centralizado dinamicamente
-        this.add.text(centroX, altura * 0.15, 'COLISEU', { 
+        // 2. Título "MENU PRINCIPAL" centralizado dinamicamente
+        this.add.text(centroX, altura * 0.15, 'MENU PRINCIPAL', { 
             fontSize: '60px', 
             fill: '#ffcc00',
             fontStyle: 'bold'
