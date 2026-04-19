@@ -5,11 +5,11 @@ let nickUsuario = "";                           // Variável global que armazena
 const config = {
     type: Phaser.AUTO,                          // Phaser decide se usa WebGL ou Canvas
     parent: 'game-container',                   // Onde meu joga será desenhado
-    // Pega a largura e altura real da janela do usuário
-    width: window.innerWidth, 
-    height: window.innerHeight,
+    // Define como padrão o full hd como resolução
+    width: 1920, 
+    height: 1080,
     scale: {
-        mode: Phaser.Scale.RESIZE,              // O jogo se redimensiona se a janela mudar
+        mode: Phaser.Scale.FIT,                 // O jogo encolhe ou estica para caber em diferentes resoluções
         autoCenter: Phaser.Scale.CENTER_BOTH    // Garante que o jogo fique centralizado na div (game-container)
     },
     physics: {
