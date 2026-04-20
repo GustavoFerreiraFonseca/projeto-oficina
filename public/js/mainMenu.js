@@ -6,13 +6,15 @@ class MainMenu extends Phaser.Scene {
 
     create() {
         // Captura as dimensões dinâmicas da janela do navegador
-        const largura = 1920;
-        const altura = 1080;
-        const centroX = largura / 2;
-        const centroY = altura / 2;
+        const larguraProjeto = 1920;
+        const alturaProjeto = 1080;
+        
+        // O centro matemático do quadro de 1920x1080
+        const centroX = larguraProjeto / 2;
+        const centroY = alturaProjeto / 2;
 
         // Coloca o nome do usuário no canto superior esquerdo
-        this.add.text(40, 40, `Usuário: ${nickUsuario}`, { 
+        this.add.text(30, 30, `Usuário: ${nickUsuario}`, { 
             fontSize: '35px', 
             fill: '#ffcc00',
             fontStyle: 'bold'

@@ -7,10 +7,12 @@ class Login extends Phaser.Scene {
     }
 
     create() {
-        const largura = 1920;
-        const altura = 1080;
-        const centroX = largura / 2;
-        const centroY = altura / 2;
+        const larguraProjeto = 1920;
+        const alturaProjeto = 1080;
+    
+        // O centro matemático do quadro de 1920x1080
+        const centroX = larguraProjeto / 2;
+        const centroY = alturaProjeto / 2;
 
         // Estilo dos textos adicionados
         this.add.text(centroX, centroY - 250, 'COLISEU', { 
