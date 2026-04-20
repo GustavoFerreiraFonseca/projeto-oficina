@@ -7,10 +7,11 @@ class Login extends Phaser.Scene {
     }
 
     create() {
+        
+        // Definindo a dimensão padrão do projeto
         const larguraProjeto = 1920;
         const alturaProjeto = 1080;
     
-        // O centro matemático do quadro de 1920x1080
         const centroX = larguraProjeto / 2;
         const centroY = alturaProjeto / 2;
 
