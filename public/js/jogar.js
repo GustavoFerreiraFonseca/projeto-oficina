@@ -4,6 +4,11 @@ class Jogar extends Phaser.Scene {
         this.botoesSalas = []; // Array para rastrear e limpar os botões
     }
 
+    init(data)
+    {
+        this.nomeUsuario = data.nomeUsuario;
+    }
+
     create() {
         const largura = 1920;
         const altura = 1080;
@@ -34,7 +39,13 @@ class Jogar extends Phaser.Scene {
         socket.emit('pedirSalas');
 
         socket.on('confirmarEntrada', (sala) => {
-            this.scene.start('Lobby', sala); // Passa o objeto da sala para a próxima cena
+
+            const dadosCompletos = {
+                ...sala,
+                nomeUsuario: this.nomeUsuario
+            };
+
+            this.scene.start('Lobby', dadosCompletos); // Passa o objeto da sala para a próxima cena
         });
     }
 

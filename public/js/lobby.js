@@ -2,13 +2,17 @@ class Lobby extends Phaser.Scene {
     constructor() {
         super({ key: 'Lobby' });
         this.salaAtual = null;
+        this.nomeUsuario = null;
         this.mensagens = [];
         this.digitando = false;
         this.textoBuffer = "";
+        this.numJogadores = 0;
+        this.jogadoresDados = new Map();
     }
 
     init(data) {
         this.salaAtual = data;
+        this.nomeUsuario = data.nomeUsuario;
     }
 
     create() {
@@ -24,6 +28,7 @@ class Lobby extends Phaser.Scene {
         // --- LISTA DE JOGADORES (ESQUERDA) ---
         this.add.text(150, 250, 'Jogadores:', { fontSize: '40px', fill: '#ffffff' });
         this.listaJogadoresText = this.add.text(150, 320, '', { fontSize: '35px', fill: '#00ff00' });
+        this.jogadoresDados.set( this.meuNome, { heroi: 'Guerreiro' });
         
         // --- BOTÃO SAIR (ABAIXO DA LISTA) ---
         let btnSair = this.add.text(1190, 900, '[ ABANDONAR SALA ]', { 
@@ -33,20 +38,59 @@ class Lobby extends Phaser.Scene {
         .on('pointerdown', () => {
             // Avisa o servidor para limpar a sala
             socket.emit('abandonarSala');
+
+            this.jogadoresDados.delete(this.meuNome);
             
             // Volta para o Menu Principal no Phaser (mantendo o socket vivo)
             this.scene.start('mainMenu');
         });
 
+        // --- BOTÃO JOGAR (ABAIXO DO BOTÃO SAIR por enquanto...)
+        let btnJogar = this.add.text(1190,950, '[ JOGAR ]', {
+            fontSize: '40px', fill: '#00ff04', fontStyle: 'bold'
+        })
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => {
+            if (this.numJogadores == 2) this.scene.start('gameScene');
+        })
+
         // --- CHAT (DIREITA) ---
         this.desenharChat();
+
+        // --- ESCOLHA DE PERSONAGENS --- 
+        this.botoesPersonagens();
 
         // --- EVENTOS DO SERVER ---
         socket.off('atualizarJogadoresLobby');
         socket.on('atualizarJogadoresLobby', (nomes) => {
             let lista = nomes.map((n, i) => `${i + 1}. ${n}`).join('\n');
-            this.listaJogadoresText.setText(lista);
+            this.jogadoresDados.clear();
+            nomes.forEach(nomeUsuario => {
+                this.jogadoresDados.set(nomeUsuario, {
+                    heroi: 'Guerreiro'
+                });
+            });
+
+            let texto = '';
+            let contador = 1;
+            this.jogadoresDados.forEach((dados,nome) => {
+                texto += `${contador}. ${nome} - ${dados.heroi}\n`;
+                contador++;
+            });
+
+            this.listaJogadoresText.setText(texto);
+            this.numJogadores = nomes.length;
+            
+            if (this.numJogadores == 2)
+            {
+                btnJogar.setStyle({ fill: '#00ff04'});
+                btnJogar.setAlpha(1);
+            } else {
+                btnJogar.setStyle({ fill: '#446e45'});
+                btnJogar.setAlpha(0.5);
+            }
         });
+
 
         socket.off('chatMensagem');
         socket.on('chatMensagem', (msg) => {
@@ -80,6 +124,35 @@ class Lobby extends Phaser.Scene {
             fontSize: '22px', fill: '#aaa' 
         });
     }
+
+    botoesPersonagens()
+    {
+        const herois = ['Guerreiro', 'Arqueiro', 'Mago', 'Ninja'];
+        let y = 500
+
+        herois.forEach((heroi, i) => {
+            let btnHeroi = this.add.text(150, y + 50*i, `[ ${heroi} ]`, {
+                fontSize: '40px', fontStyle: 'bold'
+            })
+            .setInteractive({useHandCursor: true})
+            .on('pointerdown', () => {
+                console.log("Meu nome registrado é:", this.nomeUsuario);
+                console.log("Jogadores no Map:", Array.from(this.jogadoresDados.keys()));
+                this.jogadoresDados.set(this.nomeUsuario, {heroi: heroi});
+                this.atualizarTextoLista();
+            });
+        });
+    }
+
+    atualizarTextoLista() {
+    let texto = '';
+    let contador = 1;
+    this.jogadoresDados.forEach((dados, nome) => {
+        texto += `${contador}. ${nome} - ${dados.heroi}\n`;
+        contador++;
+    });
+    this.listaJogadoresText.setText(texto);
+}
 
     adicionarMensagem(msg) {
         this.mensagens.push(`[${msg.usuario}]: ${msg.texto}`);

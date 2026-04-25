@@ -4,6 +4,11 @@ class MainMenu extends Phaser.Scene {
         super({ key: 'mainMenu' });
     }
 
+    init(data)
+    {
+        this.nomeUsuario = data.nomeUsuario;
+    }
+
     create() {
         // Captura as dimensões dinâmicas da janela do navegador
         const larguraProjeto = 1920;
@@ -28,7 +33,7 @@ class MainMenu extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Botões centralizados usando o centroX real
-        this.criarBotao(centroX, 450, 'JOGAR', () => this.scene.start('jogar'));
+        this.criarBotao(centroX, 450, 'JOGAR', () => this.scene.start('jogar', {nomeUsuario: this.nomeUsuario }));
         this.criarBotao(centroX, 580, 'RANKING', () => this.scene.start('rankingScene'));
         this.criarBotao(centroX, 710, 'CONFIGURAÇÕES', () => this.scene.start('settingsScene'));
         this.criarBotao(centroX, 840, 'SAIR', () => window.location.reload());
