@@ -19,7 +19,7 @@ class MainMenu extends Phaser.Scene {
         const centroY = alturaProjeto / 2;
 
         // Coloca o nome do usuário no canto superior esquerdo
-        this.add.text(30, 30, `Usuário: ${nickUsuario}`, { 
+        this.add.text(30, 30, `Usuário: ${this.nomeUsuario}`, { 
             fontSize: '35px', 
             fill: '#ffcc00',
             fontStyle: 'bold'

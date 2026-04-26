@@ -83,7 +83,8 @@ class Login extends Phaser.Scene {
         socket.off('loginErro');
 
         socket.on('loginSucesso', (dados) => {
-            this.scene.start('mainMenu' , { nomeUsuario: dados.nome });
+            this.nickUsuario = dados.nome
+            this.scene.start('mainMenu' , { nomeUsuario: this.nickUsuario });
         });
 
         socket.on('loginErro', (mensagem) => {

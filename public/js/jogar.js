@@ -35,11 +35,9 @@ class Jogar extends Phaser.Scene {
             this.renderizarLista(lista);
         });
 
-        // Pede a lista atualizada assim que entra na cena
-        socket.emit('pedirSalas');
-
+        // Limpa para não duplicar se o jogador entrar e sair várias vezes
+        socket.off('confirmarEntrada');
         socket.on('confirmarEntrada', (sala) => {
-
             const dadosCompletos = {
                 ...sala,
                 nomeUsuario: this.nomeUsuario
@@ -47,7 +45,13 @@ class Jogar extends Phaser.Scene {
 
             this.scene.start('Lobby', dadosCompletos); // Passa o objeto da sala para a próxima cena
         });
+
+        // Pede a lista atualizada assim que entra na cena
+        socket.emit('pedirSalas');
     }
+
+
+
 
     renderizarLista(lista) {
         const centroX = 1920 / 2;

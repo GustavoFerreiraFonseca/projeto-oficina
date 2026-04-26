@@ -28,7 +28,6 @@ class Lobby extends Phaser.Scene {
         // --- LISTA DE JOGADORES (ESQUERDA) ---
         this.add.text(150, 250, 'Jogadores:', { fontSize: '40px', fill: '#ffffff' });
         this.listaJogadoresText = this.add.text(150, 320, '', { fontSize: '35px', fill: '#00ff00' });
-        this.jogadoresDados.set( this.meuNome, { heroi: 'Guerreiro' });
         
         // --- BOTÃO SAIR (ABAIXO DA LISTA) ---
         let btnSair = this.add.text(1190, 900, '[ ABANDONAR SALA ]', { 
@@ -39,7 +38,7 @@ class Lobby extends Phaser.Scene {
             // Avisa o servidor para limpar a sala
             socket.emit('abandonarSala');
 
-            this.jogadoresDados.delete(this.meuNome);
+            this.jogadoresDados.delete(this.nomeUsuario);
             
             // Volta para o Menu Principal no Phaser (mantendo o socket vivo)
             this.scene.start('mainMenu');
@@ -62,24 +61,14 @@ class Lobby extends Phaser.Scene {
 
         // --- EVENTOS DO SERVER ---
         socket.off('atualizarJogadoresLobby');
-        socket.on('atualizarJogadoresLobby', (nomes) => {
-            let lista = nomes.map((n, i) => `${i + 1}. ${n}`).join('\n');
+        socket.on('atualizarJogadoresLobby', (listaDoServidor) => {
             this.jogadoresDados.clear();
-            nomes.forEach(nomeUsuario => {
-                this.jogadoresDados.set(nomeUsuario, {
-                    heroi: 'Guerreiro'
-                });
+            listaDoServidor.forEach(jogador => {
+                this.jogadoresDados.set(jogador.nome, { heroi: jogador.heroi });
             });
 
-            let texto = '';
-            let contador = 1;
-            this.jogadoresDados.forEach((dados,nome) => {
-                texto += `${contador}. ${nome} - ${dados.heroi}\n`;
-                contador++;
-            });
-
-            this.listaJogadoresText.setText(texto);
-            this.numJogadores = nomes.length;
+            this.atualizarTextoLista();
+            this.numJogadores = listaDoServidor.length;
             
             if (this.numJogadores == 2)
             {
@@ -136,10 +125,10 @@ class Lobby extends Phaser.Scene {
             })
             .setInteractive({useHandCursor: true})
             .on('pointerdown', () => {
-                console.log("Meu nome registrado é:", this.nomeUsuario);
-                console.log("Jogadores no Map:", Array.from(this.jogadoresDados.keys()));
-                this.jogadoresDados.set(this.nomeUsuario, {heroi: heroi});
-                this.atualizarTextoLista();
+                socket.emit('mudarHeroi', {
+                    salaId: this.salaAtual.id,
+                    heroi: heroi
+                });
             });
         });
     }
@@ -159,6 +148,7 @@ class Lobby extends Phaser.Scene {
         if (this.mensagens.length > 18) this.mensagens.shift();
         this.chatDisplay.setText(this.mensagens.join('\n'));
     }
+    
 
     gerenciarTeclado(event) {
         if (event.keyCode === 13) { // ENTER
