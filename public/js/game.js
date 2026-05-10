@@ -7,6 +7,7 @@ const config = {
     parent: 'game-container',
     width: 1920,
     height: 1080,
+    pixelArt: true,
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.NO_CENTER,     // Com o auto-center o phaser estava redimensionando errado
@@ -14,7 +15,7 @@ const config = {
     },
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 0 }, debug: false }
+        arcade: { gravity: { y: 500 } } // setando a gravidade para que o jogador consiga cair do mapa
     },
     scene: [Login, MainMenu, Jogar, Lobby, GameScene, RankingScene, SettingsScene]
 };

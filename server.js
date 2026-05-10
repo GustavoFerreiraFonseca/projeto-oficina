@@ -151,6 +151,10 @@
             socket.emit('atualizarListaSalas', salas);
         });
 
+        socket.on('iniciarPartida', (salaAtual) => {
+            io.to(salaAtual).emit('entrandoPartida');
+        });
+
         // --- DESCONEXÃO TOTAL (FECHAR ABA/SAIR) ---
         socket.on('disconnect', () => {
             console.log(`[DISCONNECT] ${socket.nick || socket.id} saiu do servidor.`);

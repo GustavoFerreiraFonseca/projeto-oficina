@@ -8,11 +8,13 @@ class Lobby extends Phaser.Scene {
         this.textoBuffer = "";
         this.numJogadores = 0;
         this.jogadoresDados = new Map();
+        this.criador = null;
     }
 
     init(data) {
         this.salaAtual = data;
         this.nomeUsuario = data.nomeUsuario;
+        this.criador = data.criador;
     }
 
     create() {
@@ -50,7 +52,7 @@ class Lobby extends Phaser.Scene {
         })
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => {
-            if (this.numJogadores == 2) this.scene.start('gameScene');
+            if (this.numJogadores == 2 && this.criador == this.nomeUsuario) socket.emit('iniciarPartida', this.salaAtual.id);
         })
 
         // --- CHAT (DIREITA) ---
@@ -70,7 +72,7 @@ class Lobby extends Phaser.Scene {
             this.atualizarTextoLista();
             this.numJogadores = listaDoServidor.length;
             
-            if (this.numJogadores == 2)
+            if (this.numJogadores == 2 && this.criador == this.nomeUsuario)
             {
                 btnJogar.setStyle({ fill: '#00ff04'});
                 btnJogar.setAlpha(1);
@@ -92,11 +94,16 @@ class Lobby extends Phaser.Scene {
             this.scene.start('mainMenu'); // Em vez de reload, vai para o menu
         });
 
+        socket.off('entrandoPartida');
+        socket.on('entrandoPartida', () => {
+            this.scene.start('gameScene', { 
+                salaId: this.salaAtual.id, 
+                nomeUsuario: this.nomeUsuario 
+            });
+        });
         // --- CONTROLES ---
         this.input.keyboard.on('keydown', (e) => this.gerenciarTeclado(e));
 
-        // SOLUÇÃO PARA O BUG DE LISTA VAZIA:
-        // Assim que o convidado entra, ele avisa o server que o Lobby dele carregou
         socket.emit('pedirListaNomes', this.salaAtual.id);
     }
 
@@ -133,15 +140,16 @@ class Lobby extends Phaser.Scene {
         });
     }
 
-    atualizarTextoLista() {
-    let texto = '';
-    let contador = 1;
-    this.jogadoresDados.forEach((dados, nome) => {
-        texto += `${contador}. ${nome} - ${dados.heroi}\n`;
-        contador++;
-    });
-    this.listaJogadoresText.setText(texto);
-}
+    atualizarTextoLista() 
+    {
+        let texto = '';
+        let contador = 1;
+        this.jogadoresDados.forEach((dados, nome) => {
+            texto += `${contador}. ${nome} - ${dados.heroi}\n`;
+            contador++;
+        });
+        this.listaJogadoresText.setText(texto);
+    }
 
     adicionarMensagem(msg) {
         this.mensagens.push(`[${msg.usuario}]: ${msg.texto}`);
