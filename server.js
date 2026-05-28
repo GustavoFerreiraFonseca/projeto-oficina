@@ -85,10 +85,8 @@
                 
                 if (sala.jogadores.length === 2) sala.cheia = true;
 
-                // 2. CRUCIAL: Confirma para QUEM CLICOU (socket.emit)
                 socket.emit('confirmarEntrada', sala); 
 
-                // 3. Notifica os outros e atualiza a lista para todos na room
                 io.to(salaId).emit('chatMensagem', {
                     usuario: 'SISTEMA',
                     texto: `${socket.nick} entrou no lobby.`
@@ -155,6 +153,19 @@
             io.to(salaAtual).emit('entrandoPartida');
         });
 
+
+        // Recebe a posição do jogador e retransmite ao oponente
+        socket.on('moverJogador', (dados) => {
+            // dados = { x, y, velocityX, velocityY, acao, salaId }
+            socket.to(dados.salaId).emit('posicaoOponente', dados);
+        });
+
+        // Sincronizar estado inicial quando os dois entram
+        socket.on('prontoParaJogar', (salaId) => {
+            socket.to(salaId).emit('oponentePronto');
+        });
+
+
         // --- DESCONEXÃO TOTAL (FECHAR ABA/SAIR) ---
         socket.on('disconnect', () => {
             console.log(`[DISCONNECT] ${socket.nick || socket.id} saiu do servidor.`);
@@ -183,6 +194,15 @@
             }
             io.emit('atualizarListaSalas', salas);
         });
+
+            salas.forEach(sala => {
+            if (sala.jogadores.includes(socket.id)) {
+                // Avisa o oponente que ainda está na arena
+                socket.to(sala.id).emit('oponenteDesconectou');
+            }
+        });
+
+
     });
 
     http.listen(3000, () => {

@@ -65,4 +65,18 @@ class Player extends Phaser.Physics.Arcade.Sprite
             }
         }
     }
+
+    // metodo criado para poder mudar a direção do oponente
+    updateDirections_oponente(x, x_anterior)
+    {
+        if (x > x_anterior)
+        {
+            this.setFlipX(false);
+        } else {
+            if (x < x_anterior)
+            {
+                this.setFlipX(true);
+            }
+        }
+    }
 }
