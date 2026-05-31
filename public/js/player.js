@@ -3,7 +3,6 @@
 
 class Player extends Phaser.Physics.Arcade.Sprite 
 {
-
     constructor(scene, x, y, texture, character, scale)
     {
         super(scene, x, y, texture);
@@ -15,11 +14,21 @@ class Player extends Phaser.Physics.Arcade.Sprite
         
         this.setDragX(1500);
         this.setMaxVelocity(300, 1000);
-    }
+        this.def_animations();
 
+        let animation_idle = this.character + "_idle";
+        this.play(animation_idle, true);
+    }
+    
     update(keyboard)
     {
         this.move(keyboard);
+        this.attack(keyboard);
+        
+        this.on('animationcomplete', () => {
+            let animation_idle = this.character + "_idle";
+            this.play(animation_idle, true);
+        })
     }
 
     // metodo que controla a movimentação do player 
@@ -52,6 +61,16 @@ class Player extends Phaser.Physics.Arcade.Sprite
         } 
     }
 
+    attack(keyboard)
+    {
+        if (keyboard.Z.isDown) 
+        {
+            let animation_attack = this.character + "_attacking";
+            let animation_idle = this.character + "_idle";
+            this.play(animation_attack, true);
+        }
+    }
+
     // metodo que controla a direção do player com base para onde ele está indo
     updateDirections()
     {
@@ -79,4 +98,55 @@ class Player extends Phaser.Physics.Arcade.Sprite
             }
         }
     }
+
+    def_animations()
+    {
+        switch (this.character)
+        {
+            case "Guerreiro":
+                this.scene.anims.create({
+                    key: "Guerreiro_idle",
+                    frames: this.scene.anims.generateFrameNumbers("Guerreiro_idle", {
+                        start: 0,
+                        end: 4
+                    }),
+                    frameRate: 6,
+                    repeat: -1
+                });
+
+                this.scene.anims.create({
+                    key: "Guerreiro_attacking",
+                    frames: this.scene.anims.generateFrameNumbers("Guerreiro_attacking", {
+                        start: 0,
+                        end: 4
+                    }),
+                    frameRate: 10,
+                    repeat: 0
+                });
+            break;
+
+            case "Arqueiro":
+                this.scene.anims.create({
+                    key: "Arqueiro_idle",
+                    frames: this.scene.anims.generateFrameNumbers("Arqueiro_idle", {
+                        start: 0,
+                        end: 4
+                    }),
+                    frameRate: 6,
+                    repeat: 0
+                });
+
+                this.scene.anims.create({
+                    key: "Arqueiro_attacking",
+                    frames: this.scene.anims.generateFrameNumbers("Arqueiro_attacking", {
+                        start: 0,
+                        end: 6
+                    }),
+                    frameRate: 10,
+                    repeat: 0
+                });
+            break;
+        }
+    }
+
 }

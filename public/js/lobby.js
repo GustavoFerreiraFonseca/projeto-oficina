@@ -67,6 +67,7 @@ class Lobby extends Phaser.Scene {
             this.jogadoresDados.clear();
             listaDoServidor.forEach(jogador => {
                 this.jogadoresDados.set(jogador.nome, { heroi: jogador.heroi });
+                console.log(jogador.nome);
             });
 
             this.atualizarTextoLista();
@@ -98,7 +99,8 @@ class Lobby extends Phaser.Scene {
         socket.on('entrandoPartida', () => {
             this.scene.start('gameScene', { 
                 salaId: this.salaAtual.id, 
-                nomeUsuario: this.nomeUsuario 
+                nomeUsuario: this.nomeUsuario,
+                jogadoresDados: this.jogadoresDados
             });
         });
         // --- CONTROLES ---
