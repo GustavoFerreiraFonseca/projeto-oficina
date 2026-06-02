@@ -288,6 +288,8 @@ class Player extends Phaser.Physics.Arcade.Sprite
             700 // px/s — velocidade alta para alcançar o oponente
         );
         this.flechas.add(flecha);
+        flecha.atirar(this._cargaAngulo, 700);
+        
         // podeTakar e atacando resetados pelo listener animationcomplete
     }
 

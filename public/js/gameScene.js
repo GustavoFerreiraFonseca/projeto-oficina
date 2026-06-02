@@ -284,7 +284,7 @@ class GameScene extends Phaser.Scene {
         btn.on('pointerout',   () => btn.setStyle({ fill: '#ffffff' }));
         btn.on('pointerdown',  () => {
             socket.emit('abandonarSala');
-            this.scene.start('mainMenu', { nomeUsuario: this.nomeUsuario });
+            this.scene.start('Lobby', { nomeUsuario: this.nomeUsuario });
         });
     }
 

@@ -25,12 +25,13 @@ class Arrow extends Phaser.Physics.Arcade.Sprite
 
         // --- Física ---
         // Cancela a gravidade global (500) e aplica só 80 → parábola suave
-        this.body.setGravityY(-500 + 80);
+
+        this.body.setGravityY(80);
         this.body.allowRotation = false; // rotação feita manualmente via setRotation
 
         // Decompõe a velocidade nos eixos
-        const vx = Math.cos(angulo) * velocidade;
-        const vy = Math.sin(angulo) * velocidade;
+        let vx = Math.cos(angulo) * velocidade;
+        let vy = Math.sin(angulo) * velocidade;
         this.setVelocity(vx, vy);
 
         // Alinha o sprite com a direção inicial de lançamento
@@ -65,6 +66,21 @@ class Arrow extends Phaser.Physics.Arcade.Sprite
         ) {
             this.destruir();
         }
+    }
+
+    // metodo para poder garantir que a flecha ira ter velocidade depois do disparo
+    // para resolver o problema da flecha que ao ser disparada, ela bugava no ar 
+    atirar(angulo, velocidade)
+    {
+        this.setRotation(angulo);
+
+        const vx = Math.cos(angulo) * velocidade;
+        const vy = Math.sin(angulo) * velocidade;
+        this.setVelocity(vx, vy);
+
+        this.body.setGravityY(80); 
+
+        this.scene.time.delayedCall(2500, () => { if (this.active) this.destruir(); });
     }
 
     // =========================================================================
