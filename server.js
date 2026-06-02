@@ -1,4 +1,4 @@
-    const express = require('express');
+const express = require('express');
     const app = express();
     const http = require('http').createServer(app);  
     const io = require('socket.io')(http);
@@ -22,29 +22,24 @@
                 return;
             }
 
-            // 1. Procurar se o nome já existe no banco de dados
             const usuarioExistente = Object.values(usuariosConectados).find(
                 u => u.nome.toLowerCase() === nomeLimpo.toLowerCase()
             );
 
             if (usuarioExistente) {
-                // 2. IMPORTANTE: Verificar se o socket desse usuário ainda está ativo
                 const socketAntigo = io.sockets.sockets.get(usuarioExistente.id);
 
                 if (socketAntigo && socketAntigo.connected) {
-                    // Se o socket antigo ainda responde, barramos o novo login
                     console.log(`[NEGADO] Tentativa de duplicar nick ativo: ${nomeLimpo}`);
                     socket.emit('loginErro', 'Este nome já está em uso por um jogador ativo!');
                     return;
                 } else {
-                    // Se o socket não existe ou caiu, limpamos a "sessão fantasma"
                     console.log(`[LIMPEZA] Removendo sessão inativa de: ${nomeLimpo}`);
                     delete usuariosConectados[usuarioExistente.id];
                     salas = salas.filter(s => s.id !== `sala_${usuarioExistente.id}`);
                 }
             }
 
-            // 3. Se passou pelos testes, registra o novo usuário
             usuariosConectados[socket.id] = {
                 id: socket.id,
                 nome: nomeLimpo,
@@ -80,7 +75,7 @@
             const sala = salas.find(s => s.id === salaId);
 
             if (sala && sala.jogadores.length < 2) {
-                socket.join(salaId); // 1. O convidado entra na "sala" do socket.io
+                socket.join(salaId);
                 sala.jogadores.push(socket.id);
                 
                 if (sala.jogadores.length === 2) sala.cheia = true;
@@ -109,9 +104,9 @@
                 io.to(salaId).emit('chatMensagem', {
                     usuario: 'SISTEMA',
                     texto: `${socket.nick} escolheu o heroi: ${heroi}.`
-                })
+                });
 
-                enviarListaLobby(salaId); // Padronizado!
+                enviarListaLobby(salaId);
             }
         });
 
@@ -132,7 +127,7 @@
                     }
                 });
             }
-            socket.leaveAll(); // Sai de todas as rooms (exceto a sua própria)
+            socket.leaveAll();
             socket.join(socket.id); 
             io.emit('atualizarListaSalas', salas);
         });
@@ -153,11 +148,19 @@
             io.to(salaAtual).emit('entrandoPartida');
         });
 
-
-        // Recebe a posição do jogador e retransmite ao oponente
+        // --- MOVIMENTAÇÃO ---
         socket.on('moverJogador', (dados) => {
-            // dados = { x, y, velocityX, velocityY, acao, salaId }
+            // dados = { x, y, velocityX, velocityY, flipX, vida, salaId }
             socket.to(dados.salaId).emit('posicaoOponente', dados);
+        });
+
+        // --- COMBATE: retransmite o dano ao oponente ---
+        // O cliente calcula a colisão localmente e avisa o servidor;
+        // o servidor repassa ao outro jogador para ele aplicar em si mesmo.
+        socket.on('atacarOponente', (dados) => {
+            // dados = { salaId, dano }
+            console.log(`[COMBATE] ${socket.nick} causou ${dados.dano} de dano na sala ${dados.salaId}`);
+            socket.to(dados.salaId).emit('receberDano', { dano: dados.dano });
         });
 
         // Sincronizar estado inicial quando os dois entram
@@ -165,26 +168,31 @@
             socket.to(salaId).emit('oponentePronto');
         });
 
-
-        // --- DESCONEXÃO TOTAL (FECHAR ABA/SAIR) ---
+        // --- DESCONEXÃO TOTAL ---
         socket.on('disconnect', () => {
             console.log(`[DISCONNECT] ${socket.nick || socket.id} saiu do servidor.`);
+
+            // Avisa oponente se estava em partida
+            salas.forEach(sala => {
+                if (sala.jogadores.includes(socket.id)) {
+                    socket.to(sala.id).emit('oponenteDesconectou');
+                }
+            });
 
             const salaDono = salas.find(s => s.id === `sala_${socket.id}`);
             if (salaDono) {
                 io.to(salaDono.id).emit('salaFechada');
                 salas = salas.filter(s => s.id !== salaDono.id);
             } else {
-                // Se era convidado, remove da lista de quem sobrou
                 salas.forEach(sala => {
                     if (sala.jogadores.includes(socket.id)) {
                         sala.jogadores = sala.jogadores.filter(id => id !== socket.id);
                         sala.cheia = false;
                         io.to(sala.id).emit('chatMensagem', { 
-                        usuario: 'SISTEMA', 
-                        texto: `${socket.nick || 'Um jogador'} desconectou.` 
-                    });
-                    enviarListaLobby(sala.id);
+                            usuario: 'SISTEMA', 
+                            texto: `${socket.nick || 'Um jogador'} desconectou.` 
+                        });
+                        enviarListaLobby(sala.id);
                     }
                 });
             }
@@ -194,22 +202,12 @@
             }
             io.emit('atualizarListaSalas', salas);
         });
-
-            salas.forEach(sala => {
-            if (sala.jogadores.includes(socket.id)) {
-                // Avisa o oponente que ainda está na arena
-                socket.to(sala.id).emit('oponenteDesconectou');
-            }
-        });
-
-
     });
 
     http.listen(3000, () => {
         console.log('Servidor rodando em http://localhost:3000');
     });
 
-    // Função auxiliar para padronizar o envio
     function enviarListaLobby(salaId) 
     {
         const sala = salas.find(s => s.id === salaId);

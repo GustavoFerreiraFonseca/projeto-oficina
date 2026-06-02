@@ -1,28 +1,32 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Batalha - 1v1 Arena</title>
-    
-    <link rel="stylesheet" href="./css/style.css">
-
-    <!-- Respeitar a ordem de importaçãodos scripts e bibliotecas -->
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
-    
-    <script src="js/login.js" defer></script>
-    <script src="js/mainMenu.js" defer></script>
-    <script src="js/jogar.js" defer></script>
-    <script src="js/lobby.js" defer></script>
-    <script src="js/player.js"></script>
-    <script src="js/gameScene.js" defer></script>
-    <script src="js/rankingScene.js" defer></script>
-    <script src="js/settingsScene.js" defer></script>   
-    <script src="js/game.js" defer></script>        <!-- Meu "jogo" que fica em loop é o último a ser importado -->
-
+    <title>Coliseu</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div id="game-container"></div>                 <!-- Local onde meu jogo irá rodar -->                        
+    <div id="game-container"></div>
+
+    <!-- Phaser 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Cenas do jogo (ordem importa: arrow antes de player, player antes de gameScene) -->
+    <script src="js/login.js"></script>
+    <script src="js/mainMenu.js"></script>
+    <script src="js/jogar.js"></script>
+    <script src="js/lobby.js"></script>
+    <script src="js/arrow.js"></script>      <!-- ← NOVO: projétil do Arqueiro -->
+    <script src="js/player.js"></script>
+    <script src="js/gameScene.js"></script>
+    <script src="js/rankingScene.js"></script>
+    <script src="js/settingsScene.js"></script>
+
+    <!-- Inicialização do jogo (deve ser o último) -->
+    <script src="js/game.js"></script>
 </body>
 </html>
