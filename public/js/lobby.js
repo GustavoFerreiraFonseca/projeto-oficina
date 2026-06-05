@@ -57,6 +57,8 @@ class Lobby extends Phaser.Scene {
 
         // --- CHAT (DIREITA) ---
         this.desenharChat();
+        // caso ja exista mensagens no chat, ele as desenha 
+        if (this.mensagens != null) this.chatDisplay.setText(this.mensagens.join('\n'));
 
         // --- ESCOLHA DE PERSONAGENS --- 
         this.botoesPersonagens();

@@ -25,6 +25,15 @@ class Player extends Phaser.Physics.Arcade.Sprite
         this.setScale(scale);
         this.depth = 1;
 
+        if (this.character == 'Guerreiro')
+        {
+            this.body.setSize(64, 88); 
+            this.body.setOffset(28, 24);
+        } else {
+            this.body.setSize(63, 87); 
+            this.body.setOffset(70, 14);
+        }
+
         // --- Física ---
         this.setDragX(1500);
         this.setMaxVelocity(300, 1000);
@@ -68,27 +77,27 @@ class Player extends Phaser.Physics.Arcade.Sprite
         // this._dbgBody = scene.add.rectangle(x, y, 40, 80, 0x0000ff, 0.3).setDepth(20);
 
         this._def_animations();
-        this._registrarEventosAnimacao();
-
+        
         this.play(this.character + '_idle', true);
     }
-
+    
     // =========================================================================
     // UPDATE
     // =========================================================================
     update(keyboard)
     {
         if (this.morto) return;
-
+        
         this._mover(keyboard);
-
+        
         if (this.character === 'Arqueiro') {
             this._updateArqueiro(keyboard);
         } else {
             this._updateGuerreiro(keyboard);
         }
-
+        
         this._atualizarHitboxPos();
+        this._registrarEventosAnimacao();
 
         // DEBUG:
         // if (this._dbgAtk)  this._dbgAtk.setPosition(this.hitboxAtaque.x, this.hitboxAtaque.y);
@@ -265,6 +274,33 @@ class Player extends Phaser.Physics.Arcade.Sprite
         gfx.strokeCircle(ox, oy, 6);
     }
 
+    _atualizarMiraOponente(angulo) {
+        this._cargaAngulo = angulo;
+        const gfx = this._miraGfx;
+        const alcance = 220; 
+        const ox = this.x;
+        const oy = this.y - 20; 
+
+        const ex = ox + Math.cos(angulo) * alcance;
+        const ey = oy + Math.sin(angulo) * alcance;
+
+        gfx.clear();
+        const segmentos = 8;
+        gfx.lineStyle(2, 0xffffff, 0.55);
+        for (let i = 0; i < segmentos; i++) {
+            const t0 = (i * 2) / (segmentos * 2);
+            const t1 = (i * 2 + 1) / (segmentos * 2);
+            gfx.beginPath();
+            gfx.moveTo(ox + Math.cos(angulo) * (t0 * alcance), oy + Math.sin(angulo) * (t0 * alcance));
+            gfx.lineTo(ox + Math.cos(angulo) * (t1 * alcance), oy + Math.sin(angulo) * (t1 * alcance));
+            gfx.strokePath();
+        }
+        gfx.fillStyle(0xffdd44, 0.9);
+        gfx.fillCircle(ex, ey, 5);
+        gfx.lineStyle(1, 0xffffff, 0.5);
+        gfx.strokeCircle(ox, oy, 6);
+    }
+
     // =========================================================================
     // DISPARAR FLECHA
     // =========================================================================
@@ -280,15 +316,25 @@ class Player extends Phaser.Physics.Arcade.Sprite
         const offX = this.flipX ? -32 : 32;
         const offY = -22;
 
+        const posXFlecha = this.x + offX;
+        const posYFlecha = this.y + offY;
+
         const flecha = new Arrow(
             this.scene,
-            this.x + offX,
-            this.y + offY,
+            posXFlecha,
+            posYFlecha,
             this._cargaAngulo,
             700 // px/s — velocidade alta para alcançar o oponente
         );
         this.flechas.add(flecha);
         flecha.atirar(this._cargaAngulo, 700);
+
+        socket.emit('dispararFlecha', {
+            salaId: this.scene.salaId,
+            x: posXFlecha,
+            y: posYFlecha,
+            angulo: this._cargaAngulo
+        });
         
         // podeTakar e atacando resetados pelo listener animationcomplete
     }
@@ -387,6 +433,7 @@ class Player extends Phaser.Physics.Arcade.Sprite
             if (frame.index === 3) this.hitboxAtaque.ativa = false;
         });
 
+
         this.on('animationcomplete', (anim) => {
             if (anim.key === 'Guerreiro_attacking') {
                 this.hitboxAtaque.ativa = false;
@@ -414,7 +461,7 @@ class Player extends Phaser.Physics.Arcade.Sprite
             this.scene.anims.create({
                 key: 'Guerreiro_idle',
                 frames: this.scene.anims.generateFrameNumbers('Guerreiro_idle', { start: 0, end: 4 }),
-                frameRate: 6, repeat: -1
+                frameRate: 6, repeat: -1,
             });
         }
         if (!existe('Guerreiro_attacking')) {

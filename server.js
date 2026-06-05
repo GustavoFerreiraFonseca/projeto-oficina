@@ -61,7 +61,7 @@ const express = require('express');
                 criador: socket.nick,
                 jogadores: [socket.id],
                 status: 'lobby',
-                cheia: false
+                cheia: false 
             };
 
             socket.join(salaId);
@@ -132,6 +132,18 @@ const express = require('express');
             io.emit('atualizarListaSalas', salas);
         });
 
+        // quando um dos jogadores terminarem a partida, voltam para o lobby
+        socket.on('abandonarPartida', (salaId) => {
+            const sala = salas.find(s => s.id === salaId);
+            if (sala) 
+            {
+                sala.status = 'lobby'; 
+                sala.cheia = true;    
+            }
+
+            io.to(salaId).emit('voltarLobby', sala);
+        })
+
         // --- CHAT ---
         socket.on('enviarMensagem', (dados) => {
             io.to(dados.salaId).emit('chatMensagem', {
@@ -152,6 +164,12 @@ const express = require('express');
         socket.on('moverJogador', (dados) => {
             // dados = { x, y, velocityX, velocityY, flipX, vida, salaId }
             socket.to(dados.salaId).emit('posicaoOponente', dados);
+        });
+
+        socket.on('dispararFlecha', (dados) => {
+            // dados = { salaId, x, y, angulo }
+            // Repassa os dados do tiro para o outro jogador na sala criar a flecha visualmente
+            socket.to(dados.salaId).emit('dispararFlecha', dados);
         });
 
         // --- COMBATE: retransmite o dano ao oponente ---

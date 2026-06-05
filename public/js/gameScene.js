@@ -31,19 +31,30 @@ class GameScene extends Phaser.Scene {
         this.load.image('Guerreiro',  'sprites/Sp_warrior.png');
         this.load.image('Arqueiro',   'sprites/Sp_archer.png');
         this.load.image('sp_arrow',   'sprites/sp_arrow.png');   // projétil
+        this.load.image('Hud',        'sprites/sp_health_bar.png') // hud 
 
         this.load.spritesheet('Guerreiro_idle',      'sprites/sp_sheet_warrior_idle.png',
-            { frameWidth: 64,  frameHeight: 89  });
+            { frameWidth: 106, frameHeight: 117 });
         this.load.spritesheet('Guerreiro_attacking', 'sprites/sp_sheet_warrior_attacking.png',
             { frameWidth: 106, frameHeight: 117 });
         this.load.spritesheet('Arqueiro_idle',       'sprites/sp_sheet_archer_idle.png',
-            { frameWidth: 64,  frameHeight: 96  });
+            { frameWidth: 204, frameHeight: 103 });
         this.load.spritesheet('Arqueiro_attacking',  'sprites/sp_sheet_archer_attacking.png',
-            { frameWidth: 134, frameHeight: 103 });
+            { frameWidth: 204, frameHeight: 103 });
     }
 
     // =========================================================================
     create() {
+        // resetando todas as variaveis para previnir de bugs futuros
+        this.player_2       = null;
+        this._hudP1            = null;
+        this._hudP2            = null;
+        this._nomeP1           = '';
+        this._nomeP2           = '';
+        this._partidaEncerrada = false;
+        this._chao             = null; // referência ao layer de colisão
+        this.physics.resume();
+
         // --- Mapa ---
         const map     = this.make.tilemap({ key: 'mapa_arena1' });
         const tileset = map.addTilesetImage('Tileset_arena', 'Tileset_arenas');
@@ -98,6 +109,15 @@ class GameScene extends Phaser.Scene {
         // --- Socket ---
         socket.emit('prontoParaJogar', this.salaId);
         this._registrarEventosSocket();
+
+        this.events.once('shutdown', () => {
+            socket.off('posicaoOponente');
+            socket.off('receberDano');
+            socket.off('oponentePronto');
+            socket.off('oponenteDesconectou');
+            socket.off('voltarLobby');
+            socket.off('dispararFlecha');
+        });
     }
 
     // =========================================================================
@@ -114,6 +134,7 @@ class GameScene extends Phaser.Scene {
 
         this._atualizarHUD();
         this._enviarPosicao();
+        this._checarFimDePartida();
     }
 
     // =========================================================================
@@ -169,9 +190,13 @@ class GameScene extends Phaser.Scene {
     // HUD — barras de vida fixas no topo
     // =========================================================================
     _criarHUD() {
-        const W = 400, H = 28, Y = 40;
-        this._hudP1 = this._makeBarraVida(80,             Y, W, H, this._nomeP1, 'left');
-        this._hudP2 = this._makeBarraVida(1920 - 80 - W,  Y, W, H, this._nomeP2, 'right');
+        const W = 600, H = 48, Y = 114;
+        const borda = this.add.sprite(0, 0, 'Hud');
+        borda.setOrigin(0, 0);
+        borda.setDepth(20);
+        borda.setScale(3);
+        this._hudP1 = this._makeBarraVida(303,             Y, W, H, this._nomeP1, 'left');
+        this._hudP2 = this._makeBarraVida(1920 - 303 - W,  Y, W, H, this._nomeP2, 'right');
     }
 
     _makeBarraVida(x, y, w, h, nome, lado) {
@@ -187,21 +212,17 @@ class GameScene extends Phaser.Scene {
         g.strokeRect(x, y, w, h);
         // Nome
         const txtX = lado === 'left' ? x + 6 : x + w - 6;
-        this.add.text(txtX, y - 24, nome, {
-            fontSize: '20px', fill: '#fff', fontStyle: 'bold',
-            stroke: '#000', strokeThickness: 3
-        }).setOrigin(lado === 'left' ? 0 : 1, 0).setScrollFactor(0).setDepth(12);
-        // Ícone
-        const iconX = lado === 'left' ? x - 28 : x + w + 6;
-        this.add.text(iconX, y + 2, '♥', { fontSize: '22px', fill: '#ff4466' })
-            .setScrollFactor(0).setDepth(12);
+        this.add.text(txtX, y - 64, nome, {
+            fontSize: '32px', fill: '#fff', fontStyle: 'bold',
+            stroke: '#000', strokeThickness: 10
+        }).setOrigin(lado === 'left' ? 0 : 1, 0).setScrollFactor(0).setDepth(22);
 
-        return { barra, larguraBase: w };
+        return { barra, larguraBase: w, x: x, y: y };
     }
 
     _atualizarHUD() {
         this._setBarra(this._hudP1, this.player_1.vida, this.player_1.maxVida);
-        this._setBarra(this._hudP2, this.player_2.vida, this.player_2.maxVida);
+        this._setBarra_oponente(this._hudP2, this.player_2.vida, this.player_2.maxVida);
     }
 
     _setBarra(hud, vida, max) {
@@ -212,10 +233,22 @@ class GameScene extends Phaser.Scene {
         else                 hud.barra.setFillStyle(0xee2222);
     }
 
+    _setBarra_oponente(hud, vida, max) {
+        const pct = Phaser.Math.Clamp(vida / max, 0, 1);
+        hud.barra.width = hud.larguraBase * pct;
+        hud.barra.setPosition(hud.x + (hud.larguraBase - ( hud.larguraBase * pct)), hud.y);
+        if      (pct > 0.5)  hud.barra.setFillStyle(0x00cc44);
+        else if (pct > 0.25) hud.barra.setFillStyle(0xffaa00);
+        else                 hud.barra.setFillStyle(0xee2222);
+    }
+
     // =========================================================================
     // ENVIAR POSIÇÃO (todo frame)
     // =========================================================================
     _enviarPosicao() {
+
+        const animacaoAtual = this.player_1.anims.currentAnim ? this.player_1.anims.currentAnim.key : null;
+
         socket.emit('moverJogador', {
             salaId:    this.salaId,
             x:         this.player_1.x,
@@ -223,7 +256,11 @@ class GameScene extends Phaser.Scene {
             velocityX: this.player_1.body.velocity.x,
             velocityY: this.player_1.body.velocity.y,
             flipX:     this.player_1.flipX,
-            vida:      this.player_1.vida
+            vida:      this.player_1.vida,
+
+            animacao: animacaoAtual,
+            carregandoArqueiro: this.player_1._carregando,
+            anguloArqueiro: this.player_1._cargaAngulo
         });
     }
 
@@ -234,16 +271,81 @@ class GameScene extends Phaser.Scene {
         socket.off('posicaoOponente');
         socket.on('posicaoOponente', (dados) => {
             this.player_2.setAlpha(1);
+            this.player_2.setFlipX(dados.flipX)
             this.player_2.updateDirections_oponente(dados.x, this.player_2.x);
             this.player_2.setPosition(dados.x, dados.y);
             this.player_2.setVelocity(dados.velocityX, dados.velocityY);
             if (dados.vida !== undefined) this.player_2.vida = dados.vida;
+
+            if (dados.animacao) {
+                // Captura qual animação o player_2 está tocando neste exato momento na sua tela
+                const animacaoOponenteNaMinhaTela = this.player_2.anims.currentAnim ? this.player_2.anims.currentAnim.key : null;
+
+                // TRAVA DE SEGURANÇA: Só dá o .play() se a animação que veio da rede for DIFERENTE da que já está rodando
+                if (dados.animacao !== animacaoOponenteNaMinhaTela) {
+                    this.player_2.play(dados.animacao, true);
+                }
+            }
+
+            if (this.player_2.character === 'Arqueiro') {
+                // Se o oponente estiver segurando o botão de carregar na tela dele...
+                if (dados.carregandoArqueiro) {
+                    this.player_2._carregando = true;
+                    this.player_2._cargaAngulo = dados.anguloArqueiro;
+                    
+                    // Força a animação a pausar no frame do arco tensionado (Frame 4)
+                    if (this.player_2.anims.isPlaying) {
+                        this.player_2.anims.pause();
+                    }
+                    
+                    // Executa o método do player que desenha a linha branca tracejada na tela
+                    this.player_2._atualizarMiraOponente(dados.anguloArqueiro);
+                } else {
+                    // Se ele soltou o botão, limpamos a mira do oponente
+                    this.player_2._carregando = false;
+                    this.player_2._miraGfx.clear();
+                    if (this.player_2.anims.isPaused) {
+                        this.player_2.anims.resume();
+                    }
+                }
+            }
         });
+
+        socket.off('dispararFlecha');
+        socket.on('dispararFlecha', (dados) => {
+            if (!this.player_2 || this.player_2.alpha === 0) return;
+
+            const flechaOponente = new Arrow(
+                this,
+                dados.x,
+                dados.y,
+                dados.angulo,
+                700
+            );
+
+            this.player_2.flechas.add(flechaOponente);
+            flechaOponente.atirar(dados.angulo, 700);
+
+            if (this.plataformas) {
+                this.physics.add.collider(flechaOponente, this.plataformas, () => {
+                    flechaOponente.destroy(); // Some ao tocar no chão/parede
+                });
+            }
+
+            this.physics.add.collider(flechaOponente, this._chao, () => {
+                    flechaOponente.destroy(); // Some ao tocar no chão/parede
+                });
+
+            // B. Fazer a flecha sumir (e te dar dano) se bater em VOCÊ (this.player_1)
+            this.physics.add.overlap(flechaOponente, this.player_1, () => {
+                flechaOponente.destroy(); // Some ao te acertar
+            });
+        });
+
 
         socket.off('receberDano');
         socket.on('receberDano', (dados) => {
             this.player_1.receberDano(dados.dano);
-            this._checarFimDePartida();
         });
 
         socket.off('oponentePronto');
@@ -253,6 +355,20 @@ class GameScene extends Phaser.Scene {
         socket.on('oponenteDesconectou', () => {
             if (!this._partidaEncerrada)
                 this._encerrarPartida('Seu oponente desconectou.\nVocê venceu por W.O.!', true);
+        });
+
+
+        socket.off('voltarLobby');
+        socket.on('voltarLobby', (sala) => {
+
+            sala.nomeUsuario = this.nomeUsuario;
+
+            socket.off('posicaoOponente');
+            socket.off('receberDano');
+            socket.off('voltarLobby');
+            this._partidaEncerrada = false;
+
+            this.scene.start('Lobby', sala); // Passa o objeto da sala para a próxima cena
         });
     }
 
@@ -272,7 +388,7 @@ class GameScene extends Phaser.Scene {
         this.add.rectangle(960, 540, 1920, 1080, 0x000000, 0.65)
             .setScrollFactor(0).setDepth(20);
         this.add.text(960, 460, msg, {
-            fontSize: '88px', fill: vitoria ? '#ffcc00' : '#ff4444',
+            fontSize: '88px', fill: vitoria == true ? '#ffcc00' : '#ff4444',
             fontStyle: 'bold', stroke: '#000', strokeThickness: 6, align: 'center'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
 
@@ -283,8 +399,7 @@ class GameScene extends Phaser.Scene {
         btn.on('pointerover',  () => btn.setStyle({ fill: '#00ff00' }));
         btn.on('pointerout',   () => btn.setStyle({ fill: '#ffffff' }));
         btn.on('pointerdown',  () => {
-            socket.emit('abandonarSala');
-            this.scene.start('Lobby', { nomeUsuario: this.nomeUsuario });
+            socket.emit('abandonarPartida', this.salaId);
         });
     }
 

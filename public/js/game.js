@@ -15,7 +15,7 @@ const config = {
     },
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 500 } } // setando a gravidade para que o jogador consiga cair do mapa
+        arcade: { gravity: { y: 500 } , debug: true} // setando a gravidade para que o jogador consiga cair do mapa
     },
     scene: [Login, MainMenu, Jogar, Lobby, GameScene, RankingScene, SettingsScene]
 };
