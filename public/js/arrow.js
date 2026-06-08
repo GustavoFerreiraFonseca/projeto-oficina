@@ -21,7 +21,7 @@ class Arrow extends Phaser.Physics.Arcade.Sprite
         scene.physics.add.existing(this);
 
         this.depth = 2;
-        this.setScale(2.5); // 56x12 → fica ~140x30, visível sem pixelado
+        this.setScale(1); // 56x12 → fica ~140x30, visível sem pixelado
 
         // --- Física ---
         // Cancela a gravidade global (500) e aplica só 80 → parábola suave

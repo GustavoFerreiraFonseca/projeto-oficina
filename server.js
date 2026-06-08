@@ -43,9 +43,10 @@ const express = require('express');
             usuariosConectados[socket.id] = {
                 id: socket.id,
                 nome: nomeLimpo,
-                vitorias: 0
+                Nvitorias: 0
             };
             socket.nick = nomeLimpo;
+            socket.Nvitorias = 0;
 
             console.log(`[LOGIN] Usuário aceito: ${nomeLimpo}`);
             socket.emit('loginSucesso', usuariosConectados[socket.id]);
@@ -184,6 +185,27 @@ const express = require('express');
         // Sincronizar estado inicial quando os dois entram
         socket.on('prontoParaJogar', (salaId) => {
             socket.to(salaId).emit('oponentePronto');
+        });
+
+        // adicionando + 1 no contador de vitorias // 
+        socket.on('AdicionarVitoria', () => {
+            usuariosConectados[socket.id].Nvitorias += 1;
+        })
+
+        socket.on('atualizarListaRanking', () => {
+
+            // pegando os valores dentro do objeto usuariosConectados
+            let listaJogadores = Object.values(usuariosConectados);
+
+            let lista_ordenada = listaJogadores.sort((a, b) => b.Nvitorias - a.Nvitorias);
+            
+            lista_ordenada.forEach((jogador, n) => {
+                socket.emit('chatListaRanking', {
+                    posicao: n + 1,
+                    usuario: jogador.nome,
+                    texto: jogador.Nvitorias,
+                });
+            });
         });
 
         // --- DESCONEXÃO TOTAL ---

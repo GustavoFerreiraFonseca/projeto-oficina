@@ -387,6 +387,13 @@ class GameScene extends Phaser.Scene {
 
         this.add.rectangle(960, 540, 1920, 1080, 0x000000, 0.65)
             .setScrollFactor(0).setDepth(20);
+
+
+        if (vitoria) {
+            socket.emit('AdicionarVitoria');
+        }
+
+        
         this.add.text(960, 460, msg, {
             fontSize: '88px', fill: vitoria == true ? '#ffcc00' : '#ff4444',
             fontStyle: 'bold', stroke: '#000', strokeThickness: 6, align: 'center'
