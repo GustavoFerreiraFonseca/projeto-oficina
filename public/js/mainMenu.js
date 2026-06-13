@@ -10,11 +10,11 @@ class MainMenu extends Phaser.Scene {
     }
 
     create() {
-        // Captura as dimensões dinâmicas da janela do navegador
+        // Captura as dimensões da janela do navegador
         const larguraProjeto = 1920;
         const alturaProjeto = 1080;
         
-        // O centro matemático do quadro de 1920x1080
+        // Medidas do centro da tela 
         const centroX = larguraProjeto / 2;
         const centroY = alturaProjeto / 2;
 
@@ -32,7 +32,7 @@ class MainMenu extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        // Botões centralizados usando o centroX real
+        // Criando botões centralizados usando o centroX real
         this.criarBotao(centroX, 450, 'JOGAR', () => this.scene.start('jogar', {nomeUsuario: this.nomeUsuario }));
         this.criarBotao(centroX, 580, 'RANKING', () => this.scene.start('rankingScene'));
         this.criarBotao(centroX, 710, 'CONFIGURAÇÕES', () => this.scene.start('settingsScene'));

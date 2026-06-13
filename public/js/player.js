@@ -1,20 +1,6 @@
-// =============================================================================
-// player.js — Classe Player com mecânica de combate completa
-// =============================================================================
-//
-// CONTROLES:
-//   A / D          → mover esquerda / direita
-//   SPACE          → pular
-//   Z ou LMB       → Guerreiro: ataque corpo a corpo
-//                    Arqueiro:  SEGURAR para mirar, SOLTAR para atirar
-//
-// INDICADOR DE MIRA (Arqueiro):
-//   Enquanto o botão é segurado, aparece uma linha tracejada + ponto
-//   apontando do arqueiro para a posição do mouse. Sem sprites extras.
-// =============================================================================
-
 class Player extends Phaser.Physics.Arcade.Sprite
 {
+    //construtor da classe player
     constructor(scene, x, y, texture, character, scale)
     {
         super(scene, x, y, texture);
@@ -52,7 +38,7 @@ class Player extends Phaser.Physics.Arcade.Sprite
         this._carregando  = false;
         this._cargaAngulo = 0;
 
-        // Edge detection de input
+        // detecta se algum input foi feito para poder previnir erros e poder execulta-los
         this._zAnterior   = false;
         this._mouseAntes  = false;
 
@@ -72,18 +58,12 @@ class Player extends Phaser.Physics.Arcade.Sprite
             runChildUpdate: true
         });
 
-        // DEBUG:
-        // this._dbgAtk  = scene.add.rectangle(x, y, 70, 60, 0xff0000, 0.35).setDepth(20);
-        // this._dbgBody = scene.add.rectangle(x, y, 40, 80, 0x0000ff, 0.3).setDepth(20);
-
         this._def_animations();
         
         this.play(this.character + '_idle', true);
     }
     
-    // =========================================================================
-    // UPDATE
-    // =========================================================================
+    // update a cada frame
     update(keyboard)
     {
         if (this.morto) return;
@@ -98,15 +78,9 @@ class Player extends Phaser.Physics.Arcade.Sprite
         
         this._atualizarHitboxPos();
         this._registrarEventosAnimacao();
-
-        // DEBUG:
-        // if (this._dbgAtk)  this._dbgAtk.setPosition(this.hitboxAtaque.x, this.hitboxAtaque.y);
-        // if (this._dbgBody) this._dbgBody.setPosition(this.x, this.y);
     }
 
-    // =========================================================================
-    // MOVIMENTAÇÃO
-    // =========================================================================
+    // gerencia a movimentação do personagme com base na tecla pressionana
     _mover(keyboard)
     {
         // Guerreiro trava durante ataque; Arqueiro pode mover durante carga
@@ -132,9 +106,7 @@ class Player extends Phaser.Physics.Arcade.Sprite
         }
     }
 
-    // =========================================================================
-    // GUERREIRO — ataque corpo a corpo
-    // =========================================================================
+    // Gerenciamento do guerreiro que verifica cada ação que ele faz
     _updateGuerreiro(keyboard)
     {
         const zAgora = keyboard.Z.isDown;
@@ -151,6 +123,7 @@ class Player extends Phaser.Physics.Arcade.Sprite
         this._mouseAntes = mouse.leftButtonDown();
     }
 
+    // execulta o ataque do guerreiro
     _dispararAtaqueCaC()
     {
         this.atacando  = true;
@@ -166,15 +139,7 @@ class Player extends Phaser.Physics.Arcade.Sprite
         }
     }
 
-    // =========================================================================
-    // ARQUEIRO — charge shot com mira livre
-    //
-    // FLUXO:
-    //  1. APERTAR  → toca anim até frame 4, pausa lá (arco tensionado)
-    //  2. SEGURAR  → mostra indicador de mira apontado para o mouse,
-    //               calcula ângulo em tempo real
-    //  3. SOLTAR   → resume anim (frames 5-6), dispara flecha com ângulo capturado
-    // =========================================================================
+    // gerenciamento do arqueiro que verifica todas as ações dele
     _updateArqueiro(keyboard)
     {
         const zAgora = keyboard.Z.isDown;
@@ -185,19 +150,19 @@ class Player extends Phaser.Physics.Arcade.Sprite
         const zApertou     = zAgora && !this._zAnterior;
         const mouseApertou = btn    && !this._mouseAntes;
 
-        // 1. Início da carga
+        // Início da carga
         if ((zApertou || mouseApertou) && !this._carregando && !this.atacando && this.podeTakar) {
             this._iniciarCarga();
         }
 
-        // 2. Durante a carga: atualiza mira
+        // Durante a carga, atualiza mira
         if (this._carregando) {
             this._atualizarMira();
         } else {
             this._miraGfx.clear(); // garante que some quando não está carregando
         }
 
-        // 3. Soltar: dispara
+        // dispara a flecha
         if (this._carregando && !botaoSeguro) {
             this._dispararFlecha();
         }
@@ -206,6 +171,7 @@ class Player extends Phaser.Physics.Arcade.Sprite
         this._mouseAntes = btn;
     }
 
+    // iniciando a carga, fazendo a animação do arqueiro parar quando 
     _iniciarCarga()
     {
         this._carregando = true;

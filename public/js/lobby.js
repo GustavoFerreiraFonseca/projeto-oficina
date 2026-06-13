@@ -85,18 +85,20 @@ class Lobby extends Phaser.Scene {
             }
         });
 
-
+        // evento que recebe a mensagem da convertida para o padrão de mensagem, onde ira ser adicionada no chat
         socket.off('chatMensagem');
         socket.on('chatMensagem', (msg) => {
             this.adicionarMensagem(msg);
         });
 
+        // se o host sair da sala, a sala é fechada e todos os jogadores voltam para o menu
         socket.off('salaFechada');
         socket.on('salaFechada', () => {
             alert("O Host encerrou a sala.");
-            this.scene.start('mainMenu'); // Em vez de reload, vai para o menu
+            this.scene.start('mainMenu'); 
         });
 
+        // evento onde apos a permição de entrar, os jogadores iram ser direcionados para a arena
         socket.off('entrandoPartida');
         socket.on('entrandoPartida', () => {
             this.scene.start('gameScene', { 
@@ -105,12 +107,14 @@ class Lobby extends Phaser.Scene {
                 jogadoresDados: this.jogadoresDados
             });
         });
+
         // --- CONTROLES ---
         this.input.keyboard.on('keydown', (e) => this.gerenciarTeclado(e));
 
         socket.emit('pedirListaNomes', this.salaAtual.id);
     }
 
+    // desenha na tela o chat 
     desenharChat() {
         const x = 1000, y = 250;
         let box = this.add.graphics();
@@ -125,6 +129,7 @@ class Lobby extends Phaser.Scene {
         });
     }
 
+    // metodo para criar botões para escolher o seu heroi
     botoesPersonagens()
     {
         const herois = ['Guerreiro', 'Arqueiro', 'Mago', 'Ninja'];
@@ -144,6 +149,7 @@ class Lobby extends Phaser.Scene {
         });
     }
 
+    // atualiza como esta listado os jogadores
     atualizarTextoLista() 
     {
         let texto = '';
@@ -155,13 +161,14 @@ class Lobby extends Phaser.Scene {
         this.listaJogadoresText.setText(texto);
     }
 
+    // adiciona uma mensagem no chat
     adicionarMensagem(msg) {
         this.mensagens.push(`[${msg.usuario}]: ${msg.texto}`);
         if (this.mensagens.length > 18) this.mensagens.shift();
         this.chatDisplay.setText(this.mensagens.join('\n'));
     }
     
-
+    // metodo para gerenciar o teclado, mais especificamente se o jogador clicou no "ENTER"
     gerenciarTeclado(event) {
         if (event.keyCode === 13) { // ENTER
             if (!this.digitando) {

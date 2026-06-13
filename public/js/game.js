@@ -10,12 +10,12 @@ const config = {
     pixelArt: true,
     scale: {
         mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.NO_CENTER,     // Com o auto-center o phaser estava redimensionando errado
-        expandParent: false                     // Impede o phaser alterar a div pai
+        autoCenter: Phaser.Scale.NO_CENTER,     
+        expandParent: false                     
     },
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 500 } , debug: false} // setando a gravidade para que o jogador consiga cair do mapa
+        arcade: { gravity: { y: 500 } , debug: false} 
     },
     scene: [Login, MainMenu, Jogar, Lobby, GameScene, RankingScene, SettingsScene]
 };

@@ -1,8 +1,5 @@
-// =============================================================================
-// gameScene.js — Cena da arena com HUD e mecânica de combate
-// =============================================================================
-
 class GameScene extends Phaser.Scene {
+    // construtor da classe
     constructor() {
         super({ key: 'gameScene' });
         this.player_2       = null;
@@ -17,13 +14,14 @@ class GameScene extends Phaser.Scene {
         this._chao             = null; // referência ao layer de colisão
     }
 
+    // inicizalizando alguns dados
     init(data) {
         this.salaId         = data.salaId;
         this.nomeUsuario    = data.nomeUsuario;
         this.jogadoresDados = data.jogadoresDados;
     }
 
-    // =========================================================================
+    // fazendo o preload dos sprites e spritesheets, alem do tilemap da arena (no caso apenas 1 tilemap)
     preload() {
         this.load.image('Tileset_arenas', 'sprites/Tileset_arenas.png');
         this.load.tilemapTiledJSON('mapa_arena1', 'sprites/Tilemap_Arena.tmj');
@@ -43,7 +41,6 @@ class GameScene extends Phaser.Scene {
             { frameWidth: 204, frameHeight: 103 });
     }
 
-    // =========================================================================
     create() {
         // resetando todas as variaveis para previnir de bugs futuros
         this.player_2       = null;
@@ -52,13 +49,13 @@ class GameScene extends Phaser.Scene {
         this._nomeP1           = '';
         this._nomeP2           = '';
         this._partidaEncerrada = false;
-        this._chao             = null; // referência ao layer de colisão
+        this._chao             = null; 
         this.physics.resume();
 
-        // --- Mapa ---
+        // definindo o Mapa 
         const map     = this.make.tilemap({ key: 'mapa_arena1' });
         const tileset = map.addTilesetImage('Tileset_arena', 'Tileset_arenas');
-        const escala  = 3;
+        const escala  = 3; 
 
         map.createLayer('fundo',  tileset, 0, 0).setScale(escala).setDepth(-2);
         map.createLayer('nuvens', tileset, 0, 0).setScale(escala).setDepth(-1);
@@ -68,27 +65,23 @@ class GameScene extends Phaser.Scene {
 
         this.cameras.main.setBounds(0, 0, map.widthInPixels * escala, map.heightInPixels * escala);
 
-        // --- Personagens ---
+        // criando os players, tanto o jogador atual, quanto o oponente
         const heroiLocal    = this.jogadoresDados.get(this.nomeUsuario)?.heroi ?? 'Guerreiro';
         const heroiOponente = this._heroiOponente();
 
-        this.player_1 = new Player(this, 500, 200, heroiLocal,    heroiLocal,    1);
-        this.player_2 = new Player(this, 900, 200, heroiOponente, heroiOponente, 1);
+        this.player_1 = new Player(this, 500, 200, heroiLocal,    heroiLocal,    1); // P1
+        this.player_2 = new Player(this, 900, 200, heroiOponente, heroiOponente, 1); // P2
         this.player_2.setAlpha(0);
 
         this.physics.add.collider(this.player_1, this._chao);
         this.physics.add.collider(this.player_2, this._chao);
 
-        // --- Colisão das flechas do P1 com o chão ---
+        // Colisão das flechas do P1 com o chão 
         this.physics.add.collider(
             this.player_1.flechas,
             this._chao,
             (flecha) => { flecha.destruir(); }
         );
-
-        // --- Colisão das flechas do P1 com o corpo do P2 ---
-        // Verificada manualmente no update para ter controle total do evento de rede
-        // (não usamos physics.add.overlap aqui para evitar callbacks fora de sincronia)
 
         // --- Nomes e HUD ---
         this._nomeP1 = this.nomeUsuario;
@@ -98,29 +91,19 @@ class GameScene extends Phaser.Scene {
         // --- Controles ---
         this.teclado = this.input.keyboard.addKeys('A,D,Z,X,C,SPACE');
 
-        // Clique do mouse — o player_1 gerencia internamente pelo activePointer,
-        // mas mantemos este listener para o Guerreiro (ativarAtaquePorMouse)
+        // gerenciamento do clique do mouse do player1, especificamente se o player está usando o Guerreiro
         this.input.on('pointerdown', (pointer) => {
             if (pointer.leftButtonDown() && this.player_1.character === 'Guerreiro') {
                 this.player_1.ativarAtaquePorMouse();
             }
         });
 
-        // --- Socket ---
+        // Começando os registros dos eventos do Socket
         socket.emit('prontoParaJogar', this.salaId);
         this._registrarEventosSocket();
-
-        this.events.once('shutdown', () => {
-            socket.off('posicaoOponente');
-            socket.off('receberDano');
-            socket.off('oponentePronto');
-            socket.off('oponenteDesconectou');
-            socket.off('voltarLobby');
-            socket.off('dispararFlecha');
-        });
     }
 
-    // =========================================================================
+    // update a cada frame
     update() {
         if (this._partidaEncerrada) return;
 
@@ -137,9 +120,7 @@ class GameScene extends Phaser.Scene {
         this._checarFimDePartida();
     }
 
-    // =========================================================================
-    // COLISÃO CORPO A CORPO (Guerreiro)
-    // =========================================================================
+    // verificando o ataque do guerreiro (ataque corpo a corpo)
     _checarAtaqueCaC() {
         if (!this.player_1.hitboxAtaque.ativa) return;
         if (this.player_2.alpha === 0)         return;
@@ -155,9 +136,7 @@ class GameScene extends Phaser.Scene {
         }
     }
 
-    // =========================================================================
-    // COLISÃO FLECHAS (Arqueiro) vs P2
-    // =========================================================================
+    // verificando a colisão da flecha
     _checarFlechas() {
         if (this.player_2.alpha === 0) return;
 
@@ -177,18 +156,14 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    // =========================================================================
-    // FLASH VISUAL DE HIT
-    // =========================================================================
+    // Flash visual de hit
     _flashHit(alvo) {
         alvo.setTint(0xffffff);
         this.time.delayedCall(80,  () => alvo.setTint(0xff4444));
         this.time.delayedCall(220, () => alvo.clearTint());
     }
 
-    // =========================================================================
-    // HUD — barras de vida fixas no topo
-    // =========================================================================
+    //criando a hud, basicamente apenas contendo a barra de vida
     _criarHUD() {
         const W = 600, H = 48, Y = 114;
         const borda = this.add.sprite(0, 0, 'Hud');
@@ -199,6 +174,7 @@ class GameScene extends Phaser.Scene {
         this._hudP2 = this._makeBarraVida(1920 - 303 - W,  Y, W, H, this._nomeP2, 'right');
     }
 
+    // criando a barra de vida do jogador
     _makeBarraVida(x, y, w, h, nome, lado) {
         // Fundo
         this.add.rectangle(x, y, w, h, 0x111111, 0.85)
@@ -220,11 +196,13 @@ class GameScene extends Phaser.Scene {
         return { barra, larguraBase: w, x: x, y: y };
     }
 
+    // atualiza a cada frame o hud
     _atualizarHUD() {
         this._setBarra(this._hudP1, this.player_1.vida, this.player_1.maxVida);
         this._setBarra_oponente(this._hudP2, this.player_2.vida, this.player_2.maxVida);
     }
 
+    // criando a barra de vida do jogador atual
     _setBarra(hud, vida, max) {
         const pct = Phaser.Math.Clamp(vida / max, 0, 1);
         hud.barra.width = hud.larguraBase * pct;
@@ -232,7 +210,8 @@ class GameScene extends Phaser.Scene {
         else if (pct > 0.25) hud.barra.setFillStyle(0xffaa00);
         else                 hud.barra.setFillStyle(0xee2222);
     }
-
+    
+    // criando a barra de vida do oponente
     _setBarra_oponente(hud, vida, max) {
         const pct = Phaser.Math.Clamp(vida / max, 0, 1);
         hud.barra.width = hud.larguraBase * pct;
@@ -242,9 +221,7 @@ class GameScene extends Phaser.Scene {
         else                 hud.barra.setFillStyle(0xee2222);
     }
 
-    // =========================================================================
-    // ENVIAR POSIÇÃO (todo frame)
-    // =========================================================================
+    // enviar posição junto com as ações do player como mirar, atirar, atacar, etc
     _enviarPosicao() {
 
         const animacaoAtual = this.player_1.anims.currentAnim ? this.player_1.anims.currentAnim.key : null;
@@ -264,9 +241,7 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    // =========================================================================
-    // SOCKET
-    // =========================================================================
+    // registrando todos os eventos do socket 
     _registrarEventosSocket() {
         socket.off('posicaoOponente');
         socket.on('posicaoOponente', (dados) => {
@@ -311,6 +286,7 @@ class GameScene extends Phaser.Scene {
             }
         });
 
+        // evento que dispara a flecha
         socket.off('dispararFlecha');
         socket.on('dispararFlecha', (dados) => {
             if (!this.player_2 || this.player_2.alpha === 0) return;
@@ -342,22 +318,26 @@ class GameScene extends Phaser.Scene {
             });
         });
 
-
+        // evento que recebe dano
         socket.off('receberDano');
         socket.on('receberDano', (dados) => {
             this.player_1.receberDano(dados.dano);
         });
 
+        // evento que aviasa quando o oponente esta pronto
         socket.off('oponentePronto');
         socket.on('oponentePronto', () => console.log('Oponente entrou!'));
-
+        
+        
+        
+        // evento que avisa que o oponente desconectou da sala (caiu)
         socket.off('oponenteDesconectou');
         socket.on('oponenteDesconectou', () => {
             if (!this._partidaEncerrada)
                 this._encerrarPartida('Seu oponente desconectou.\nVocê venceu por W.O.!', true);
         });
 
-
+        // evento para que quando o jogador apertar em voltar, ele volte para o lobby, 
         socket.off('voltarLobby');
         socket.on('voltarLobby', (sala) => {
 
@@ -372,15 +352,14 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    // =========================================================================
-    // FIM DE PARTIDA
-    // =========================================================================
+    // checa o fim da partida, ou seja, se algum dos jogadores morreu ou se algum caiu antes 
     _checarFimDePartida() {
         if (this._partidaEncerrada) return;
         if (this.player_1.vida <= 0) this._encerrarPartida('Você foi derrotado!', false);
         if (this.player_2.vida <= 0) this._encerrarPartida('Você venceu!', true);
     }
 
+    // encerra a partida, mostrando uma mensagem na tela dependo se voce ganhou, perdeu ou oponente desconectado
     _encerrarPartida(msg, vitoria) {
         this._partidaEncerrada = true;
         this.physics.pause();
@@ -410,12 +389,13 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    // =========================================================================
+    // define qual é o heroi do oponente
     _heroiOponente() {
         let h = 'Guerreiro';
         this.jogadoresDados.forEach((d, n) => { if (n !== this.nomeUsuario) h = d.heroi; });
         return h;
     }
+    // define qual é o nome do oponente
     _nomeOponente() {
         let n = 'Oponente';
         this.jogadoresDados.forEach((d, nome) => { if (nome !== this.nomeUsuario) n = nome; });

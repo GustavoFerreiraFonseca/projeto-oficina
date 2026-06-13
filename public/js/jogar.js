@@ -4,22 +4,24 @@ class Jogar extends Phaser.Scene {
         this.botoesSalas = []; // Array para rastrear e limpar os botões
     }
 
+    // inicializando alguns dados, no caso apenas o nomeUsuario
     init(data)
     {
         this.nomeUsuario = data.nomeUsuario;
     }
 
     create() {
+        // declarando o tamanho da tela e seu centro
         const largura = 1920;
         const altura = 1080;
         const centroX = largura / 2;
 
-        // Título
+        // Escrevendo título
         this.add.text(centroX, 100, 'SALAS DISPONÍVEIS', { 
             fontSize: '80px', fill: '#ffcc00', fontStyle: 'bold' 
         }).setOrigin(0.5);
 
-        // Botão para CRIAR uma sala
+        // Botão para criar uma sala
         let btnCriar = this.add.text(centroX, 950, '[ CRIAR MINHA ARENA ]', { 
             fontSize: '50px', fill: '#00ff00', fontStyle: 'bold' 
         })
@@ -43,16 +45,14 @@ class Jogar extends Phaser.Scene {
                 nomeUsuario: this.nomeUsuario
             };
 
-            this.scene.start('Lobby', dadosCompletos); // Passa o objeto da sala para a próxima cena
+            this.scene.start('Lobby', dadosCompletos); 
         });
 
         // Pede a lista atualizada assim que entra na cena
         socket.emit('pedirSalas');
     }
 
-
-
-
+    // atualiza a lista com o numero de salas existentes
     renderizarLista(lista) {
         const centroX = 1920 / 2;
 
@@ -68,7 +68,6 @@ class Jogar extends Phaser.Scene {
             return;
         }
 
-        // 2. Criar um botão para cada sala vinda do servidor
         lista.forEach((sala, index) => {
             let yPos = 300 + (index * 120); // Espaçamento vertical
 

@@ -1,37 +1,35 @@
 class RankingScene extends Phaser.Scene {
     constructor() {
-        // A 'key' deve ser igual ao nome que você usará no game.js
+        // A 'key' da scene
         super({ key: 'rankingScene' });
     }
 
-    preload() {
-        // Onde carregaremos as artes do seu amigo
-    }
-
     create() {
+        // inicializamos o array contendo todos os colocados dod ranking
         this.listaRanking = [];
 
-        // Texto de teste para você ver que não está mais "tudo preto"
+        // escrendo na tela "TELA DE RANKING"
         this.add.text(975, 200, 'TELA DE RANKING', { 
             fontSize: '120px', fill: '#ffcc00', fontStyle: 'bold'
         }).setOrigin(0.5);
 
+        // desenha a lista
         this.desenharLista();     
         
+        // cria o botão de voltar 
         this.criarBotao(975, 1000, 'Voltar', () => this.scene.start('mainMenu'));
 
+        // atualiza o ranking toda vez que o jogador entrar na tela de ranking
         socket.emit('atualizarListaRanking');
 
+        // recebe a mensagem formatada e adiciona na lista
         socket.off('chatListaRanking');
         socket.on('chatListaRanking', (mensagem) => {
-            this.adicionarMensagem(mensagem)
+            this.adicionarColocado(mensagem)
         });
     }
 
-    update() {
-        // Lógica constante (não precisa de nada agora)
-    }
-
+    // desenha a lista, centralizando ela na tela
     desenharLista() {
         const x = 400, y = 300;
         let box = this.add.graphics();
@@ -48,7 +46,8 @@ class RankingScene extends Phaser.Scene {
         this.chatDisplay.setOrigin(0.5, 0);
     }
 
-    adicionarMensagem(msg) 
+    // metodo para adicionar um novo jogador a lista
+    adicionarColocado(msg) 
     {
         if (msg.posicao === 1) {
             this.listaRanking = [];
@@ -59,6 +58,7 @@ class RankingScene extends Phaser.Scene {
         this.chatDisplay.setText(this.listaRanking.join('\n'));
     }
 
+    // cria um botão para poder voltar para a Main Menu
     criarBotao(x, y, label, acao) 
     {
         let larguraB = 500;

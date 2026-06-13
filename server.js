@@ -72,6 +72,7 @@ const express = require('express');
             socket.emit('confirmarEntrada', novaSala);
         });
 
+        // verifica se a sala esta cheia ou não para que um novo jogador entre, alem de avisar no char do lobby quem entrou 
         socket.on('entrarSala', (salaId) => {
             const sala = salas.find(s => s.id === salaId);
 
@@ -97,6 +98,7 @@ const express = require('express');
             enviarListaLobby(salaId);
         });
 
+        // Ao clicar no heroi que eles querem, o sistema mudara o heroi para ele
         socket.on('mudarHeroi', (dados) => {
             const { salaId, heroi } = dados;
             if (usuariosConectados[socket.id]) {
@@ -116,7 +118,7 @@ const express = require('express');
             const salaDono = salas.find(s => s.id === `sala_${socket.id}`);
             
             if (salaDono) {
-                io.to(salaDono.id).emit('salaFechada');
+                socket.to(salaDono.id).emit('salaFechada');
                 salas = salas.filter(s => s.id !== salaDono.id);
             } else {
                 salas.forEach(sala => {
@@ -133,7 +135,7 @@ const express = require('express');
             io.emit('atualizarListaSalas', salas);
         });
 
-        // quando um dos jogadores terminarem a partida, voltam para o lobby
+        // quando um jogadores terminar a partida e clicar em sair, voltam para o lobby
         socket.on('abandonarPartida', (salaId) => {
             const sala = salas.find(s => s.id === salaId);
             if (sala) 
@@ -145,7 +147,7 @@ const express = require('express');
             io.to(salaId).emit('voltarLobby', sala);
         })
 
-        // --- CHAT ---
+        // --- Lista Ranking
         socket.on('enviarMensagem', (dados) => {
             io.to(dados.salaId).emit('chatMensagem', {
                 usuario: socket.nick,
@@ -168,16 +170,12 @@ const express = require('express');
         });
 
         socket.on('dispararFlecha', (dados) => {
-            // dados = { salaId, x, y, angulo }
             // Repassa os dados do tiro para o outro jogador na sala criar a flecha visualmente
             socket.to(dados.salaId).emit('dispararFlecha', dados);
         });
 
-        // --- COMBATE: retransmite o dano ao oponente ---
-        // O cliente calcula a colisão localmente e avisa o servidor;
-        // o servidor repassa ao outro jogador para ele aplicar em si mesmo.
+        // cliente calcula localmente a colisão e manda para o outro jogador via servidor para poder aplicar o dano
         socket.on('atacarOponente', (dados) => {
-            // dados = { salaId, dano }
             console.log(`[COMBATE] ${socket.nick} causou ${dados.dano} de dano na sala ${dados.salaId}`);
             socket.to(dados.salaId).emit('receberDano', { dano: dados.dano });
         });
@@ -192,8 +190,8 @@ const express = require('express');
             usuariosConectados[socket.id].Nvitorias += 1;
         })
 
+        // atualiza a lista do ranking de na ordem decrescente, mostrando a posição, nome e numero de vitorias
         socket.on('atualizarListaRanking', () => {
-
             // pegando os valores dentro do objeto usuariosConectados
             let listaJogadores = Object.values(usuariosConectados);
 
@@ -221,7 +219,7 @@ const express = require('express');
 
             const salaDono = salas.find(s => s.id === `sala_${socket.id}`);
             if (salaDono) {
-                io.to(salaDono.id).emit('salaFechada');
+                socket.to(salaDono.id).emit('salaFechada');
                 salas = salas.filter(s => s.id !== salaDono.id);
             } else {
                 salas.forEach(sala => {
