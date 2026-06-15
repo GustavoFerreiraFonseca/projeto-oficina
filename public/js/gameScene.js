@@ -52,6 +52,8 @@ class GameScene extends Phaser.Scene {
         this._chao             = null; 
         this.physics.resume();
 
+        this._playMusic();
+
         // definindo o Mapa 
         const map     = this.make.tilemap({ key: 'mapa_arena1' });
         const tileset = map.addTilesetImage('Tileset_arena', 'Tileset_arenas');
@@ -348,6 +350,10 @@ class GameScene extends Phaser.Scene {
             socket.off('voltarLobby');
             this._partidaEncerrada = false;
 
+            this.music = this.registry.get('Musica_atual');
+            this.music.resume({volume: this.registry.get('volumeBGM'), loop: true});
+            this.registry.set('Musica_atual', this.music);
+             
             this.scene.start('Lobby', sala); // Passa o objeto da sala para a próxima cena
         });
     }
@@ -363,20 +369,20 @@ class GameScene extends Phaser.Scene {
     _encerrarPartida(msg, vitoria) {
         this._partidaEncerrada = true;
         this.physics.pause();
+        this._stopMusic();
 
         this.add.rectangle(960, 540, 1920, 1080, 0x000000, 0.65)
             .setScrollFactor(0).setDepth(20);
 
-
-        if (vitoria) {
-            socket.emit('AdicionarVitoria');
-        }
-
+        if (vitoria) socket.emit('AdicionarVitoria');
         
         this.add.text(960, 460, msg, {
             fontSize: '88px', fill: vitoria == true ? '#ffcc00' : '#ff4444',
             fontStyle: 'bold', stroke: '#000', strokeThickness: 6, align: 'center'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+
+        const audio = vitoria == true ? 'sound_Win' : 'sound_Lose';
+        if (this.registry.get('SoundEffectsOn')) this.sound.play(audio, {volume: this.registry.get('volumeSFX')});
 
         const btn = this.add.text(960, 620, '[ VOLTAR AO MENU ]', {
             fontSize: '50px', fill: '#ffffff', stroke: '#000', strokeThickness: 4
@@ -385,6 +391,7 @@ class GameScene extends Phaser.Scene {
         btn.on('pointerover',  () => btn.setStyle({ fill: '#00ff00' }));
         btn.on('pointerout',   () => btn.setStyle({ fill: '#ffffff' }));
         btn.on('pointerdown',  () => {
+            if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_Click', {volume: this.registry.get('volumeSFX')});
             socket.emit('abandonarPartida', this.salaId);
         });
     }
@@ -395,10 +402,33 @@ class GameScene extends Phaser.Scene {
         this.jogadoresDados.forEach((d, n) => { if (n !== this.nomeUsuario) h = d.heroi; });
         return h;
     }
+
     // define qual é o nome do oponente
     _nomeOponente() {
         let n = 'Oponente';
         this.jogadoresDados.forEach((d, nome) => { if (nome !== this.nomeUsuario) n = nome; });
         return n;
+    }
+
+    // toca a musica de batalha do jogo
+    _playMusic()
+    {
+        const volumeBGM = this.registry.get('volumeBGM');
+        
+        this.intro = this.sound.add('Battle_Music_intro');
+        
+        this.intro.on('complete', () => {
+            this.music = this.sound.add('Battle_Music_loop');
+            this.music.play({volume: volumeBGM, loop: true});
+        });
+        
+        this.intro.play({volume: volumeBGM});
+    }
+    
+    // Para a musica de batalha do jogo
+    _stopMusic()
+    {
+        if (this.intro && this.intro.isPlaying) this.intro.stop();
+        if (this.music && this.music.isPlaying) this.music.stop();
     }
 }

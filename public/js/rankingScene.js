@@ -8,8 +8,8 @@ class RankingScene extends Phaser.Scene {
         // inicializamos o array contendo todos os colocados dod ranking
         this.listaRanking = [];
 
-        // escrendo na tela "TELA DE RANKING"
-        this.add.text(975, 200, 'TELA DE RANKING', { 
+        // escrendo na tela "TELA RANKING"
+        this.add.text(975, 200, 'RANKING', { 
             fontSize: '120px', fill: '#ffcc00', fontStyle: 'bold'
         }).setOrigin(0.5);
 
@@ -89,6 +89,9 @@ class RankingScene extends Phaser.Scene {
             borda.strokeRoundedRect(x - larguraB/2, y - alturaB/2, larguraB, alturaB, 20);
         });
 
-        txt.on('pointerdown', acao);
+        txt.on('pointerdown', () => {
+            if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_Click', {volume: this.registry.get('volumeSFX')});
+            if (acao) acao();
+        });
     }
 }

@@ -29,6 +29,7 @@ class Jogar extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
         btnCriar.on('pointerdown', () => {
+            if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_Click', {volume: this.registry.get('volumeSFX')});
             socket.emit('criarSala');
         });
 
@@ -79,6 +80,7 @@ class Jogar extends Phaser.Scene {
 
             txtSala.on('pointerdown', () => {
                 console.log("Tentando entrar na sala:", sala.id);
+                if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_Click', {volume: this.registry.get('volumeSFX')});
                 socket.emit('entrarSala', sala.id);
             });
 

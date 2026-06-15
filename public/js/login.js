@@ -6,6 +6,27 @@ class Login extends Phaser.Scene {
         this.cursorPiscando = true;
     }
 
+    preload()
+    {
+        // colocando no registry (banco de dados interno do phazer)
+        this.registry.set('volumeSFX', 0.0);
+        this.registry.set('SoundEffectsOn', true);
+
+        this.registry.set('volumeBGM', 0.0);
+        this.registry.set('musicOn', true);
+
+        // fazendo o preload dos sound effects do jogo (SFX)
+        this.load.audio('sound_StartGame', 'sfxSounds_Music/Start_Game.wav');
+        this.load.audio('sound_Click', 'sfxSounds_Music/Menu_Select2.wav');
+        this.load.audio('sound_Win', 'sfxSounds_Music/Level_Complete.wav');
+        this.load.audio('sound_Lose', 'sfxSounds_Music/Player_Died.wav');
+
+        // fazendo o preload das musicas de fundo (BGM)
+        this.load.audio('Battle_Music_intro', 'sfxSounds_Music/BGM/01. Battle Theme I (intro).ogg')
+        this.load.audio('Battle_Music_loop', 'sfxSounds_Music/BGM/01. Battle Theme I (loop).ogg')
+        this.load.audio('Music_Menus', 'sfxSounds_Music/BGM/08 - Shop.ogg')
+    }
+
     create() {
         
         // Definindo a dimensão padrão do projeto
@@ -84,6 +105,7 @@ class Login extends Phaser.Scene {
 
         socket.on('loginSucesso', (dados) => {
             this.nickUsuario = dados.nome
+            if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_StartGame', {volume: this.registry.get('volumeSFX')});
             this.scene.start('mainMenu' , { nomeUsuario: this.nickUsuario });
         });
 

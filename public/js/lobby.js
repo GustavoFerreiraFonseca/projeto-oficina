@@ -37,6 +37,11 @@ class Lobby extends Phaser.Scene {
         })
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => {
+
+            if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_Click', {volume: this.registry.get('volumeSFX')});
+
+            if (this.criador == this.nomeUsuario) this.mensagens = [];
+            
             // Avisa o servidor para limpar a sala
             socket.emit('abandonarSala');
 
@@ -52,6 +57,7 @@ class Lobby extends Phaser.Scene {
         })
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => {
+            if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_Click', {volume: this.registry.get('volumeSFX')});
             if (this.numJogadores == 2 && this.criador == this.nomeUsuario) socket.emit('iniciarPartida', this.salaAtual.id);
         })
 
@@ -101,6 +107,11 @@ class Lobby extends Phaser.Scene {
         // evento onde apos a permição de entrar, os jogadores iram ser direcionados para a arena
         socket.off('entrandoPartida');
         socket.on('entrandoPartida', () => {
+
+            this.music = this.registry.get('Musica_atual');
+            this.music.pause();
+            this.registry.set('Musica_atual', this.music);
+
             this.scene.start('gameScene', { 
                 salaId: this.salaAtual.id, 
                 nomeUsuario: this.nomeUsuario,
@@ -141,6 +152,7 @@ class Lobby extends Phaser.Scene {
             })
             .setInteractive({useHandCursor: true})
             .on('pointerdown', () => {
+                if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_Click', {volume: this.registry.get('volumeSFX')});
                 socket.emit('mudarHeroi', {
                     salaId: this.salaAtual.id,
                     heroi: heroi

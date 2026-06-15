@@ -18,6 +18,14 @@ class MainMenu extends Phaser.Scene {
         const centroX = larguraProjeto / 2;
         const centroY = alturaProjeto / 2;
 
+        
+        if (this.music == null && this.registry.get('musicOn'))
+        {
+            this.music = this.sound.add('Music_Menus');
+            this.registry.set('Musica_atual', this.music);
+            this.music.play({volume: this.registry.get('volumeBGM'), loop: true});
+        }
+
         // Coloca o nome do usuário no canto superior esquerdo
         this.add.text(30, 30, `Usuário: ${this.nomeUsuario}`, { 
             fontSize: '35px', 
@@ -69,6 +77,9 @@ class MainMenu extends Phaser.Scene {
             borda.strokeRoundedRect(x - larguraB/2, y - alturaB/2, larguraB, alturaB, 20);
         });
 
-        txt.on('pointerdown', acao);
+        txt.on('pointerdown', () => {
+            if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_Click', {volume: this.registry.get('volumeSFX')});
+            if (acao) acao();
+        });
     }
 }
