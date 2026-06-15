@@ -15,7 +15,7 @@ const config = {
     },
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 500 } , debug: true} 
+        arcade: { gravity: { y: 500 } , debug: false} 
     },
     scene: [Login, MainMenu, Jogar, Lobby, GameScene, RankingScene, SettingsScene]
 };
