@@ -59,6 +59,7 @@ class Player extends Phaser.Physics.Arcade.Sprite
         });
 
         this._def_animations();
+        this._registrarEventosAnimacao();
         
         this.play(this.character + '_idle', true);
     }
@@ -77,7 +78,6 @@ class Player extends Phaser.Physics.Arcade.Sprite
         }
         
         this._atualizarHitboxPos();
-        this._registrarEventosAnimacao();
     }
 
     // gerencia a movimentação do personagme com base na tecla pressionana

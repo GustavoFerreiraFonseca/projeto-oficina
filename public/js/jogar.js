@@ -21,17 +21,9 @@ class Jogar extends Phaser.Scene {
             fontSize: '80px', fill: '#ffcc00', fontStyle: 'bold' 
         }).setOrigin(0.5);
 
-        // Botão para criar uma sala
-        let btnCriar = this.add.text(centroX, 950, '[ CRIAR MINHA ARENA ]', { 
-            fontSize: '50px', fill: '#00ff00', fontStyle: 'bold' 
-        })
-        .setOrigin(0.5)
-        .setInteractive({ useHandCursor: true });
-
-        btnCriar.on('pointerdown', () => {
-            if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_Click', {volume: this.registry.get('volumeSFX')});
-            socket.emit('criarSala');
-        });
+        // Botão para criar uma sala e botão para voltar para a tela de menu principal
+        this.criarBotao(centroX, 800, 'CRIAR MINHA ARENA', () => socket.emit('criarSala'));
+        this.criarBotao(centroX, 950, 'VOLTAR', () => this.scene.start('mainMenu'));
 
         // Escutando o servidor para atualizar a lista
         socket.on('atualizarListaSalas', (lista) => {
@@ -62,7 +54,7 @@ class Jogar extends Phaser.Scene {
         this.botoesSalas = [];
 
         if (lista.length === 0) {
-            let aviso = this.add.text(centroX, 540, 'Nenhuma sala aberta no momento...', { 
+            let aviso = this.add.text(centroX, 350, 'Nenhuma sala aberta no momento...', { 
                 fontSize: '30px', fill: '#888888' 
             }).setOrigin(0.5);
             this.botoesSalas.push(aviso);
@@ -89,6 +81,43 @@ class Jogar extends Phaser.Scene {
             txtSala.on('pointerout', () => txtSala.setStyle({ fill: '#ffffff' }));
 
             this.botoesSalas.push(txtSala);
+        });
+    }
+
+    // cria um botão para poder voltar para a Main Menu
+    criarBotao(x, y, label, acao) 
+    {
+        let larguraB = 500;
+        let alturaB = 100;
+
+        // Desenho da borda inicial
+        let borda = this.add.graphics();
+        borda.lineStyle(5, 0xffffff);
+        borda.strokeRoundedRect(x - larguraB/2, y - alturaB/2, larguraB, alturaB, 20);
+
+        // Texto do botão
+        let txt = this.add.text(x, y, label, { fontSize: '45px', fill: '#ffffff' })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+        // Hover --> Ao passar o mouse por cima do botão ele fica verde
+        txt.on('pointerover', () => {
+            txt.setStyle({ fill: '#00ff00' });
+            borda.clear();
+            borda.lineStyle(5, 0x00ff00);
+            borda.strokeRoundedRect(x - larguraB/2, y - alturaB/2, larguraB, alturaB, 20);
+        });
+
+        txt.on('pointerout', () => {
+            txt.setStyle({ fill: '#ffffff' });
+            borda.clear();
+            borda.lineStyle(5, 0xffffff);
+            borda.strokeRoundedRect(x - larguraB/2, y - alturaB/2, larguraB, alturaB, 20);
+        });
+
+        txt.on('pointerdown', () => {
+            if (this.registry.get('SoundEffectsOn')) this.sound.play('sound_Click', {volume: this.registry.get('volumeSFX')});
+            if (acao) acao();
         });
     }
 }

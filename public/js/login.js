@@ -9,10 +9,10 @@ class Login extends Phaser.Scene {
     preload()
     {
         // colocando no registry (banco de dados interno do phazer)
-        this.registry.set('volumeSFX', 0.0);
+        this.registry.set('volumeSFX', 0.5);
         this.registry.set('SoundEffectsOn', true);
 
-        this.registry.set('volumeBGM', 0.0);
+        this.registry.set('volumeBGM', 0.3);
         this.registry.set('musicOn', true);
 
         // fazendo o preload dos sound effects do jogo (SFX)

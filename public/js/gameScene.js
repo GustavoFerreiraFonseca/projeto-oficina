@@ -19,6 +19,7 @@ class GameScene extends Phaser.Scene {
         this.salaId         = data.salaId;
         this.nomeUsuario    = data.nomeUsuario;
         this.jogadoresDados = data.jogadoresDados;
+        this.criador        = data.criador;
     }
 
     // fazendo o preload dos sprites e spritesheets, alem do tilemap da arena (no caso apenas 1 tilemap)
@@ -71,8 +72,12 @@ class GameScene extends Phaser.Scene {
         const heroiLocal    = this.jogadoresDados.get(this.nomeUsuario)?.heroi ?? 'Guerreiro';
         const heroiOponente = this._heroiOponente();
 
-        this.player_1 = new Player(this, 500, 200, heroiLocal,    heroiLocal,    1); // P1
-        this.player_2 = new Player(this, 900, 200, heroiOponente, heroiOponente, 1); // P2
+        // definindo a posição de cada um no começo
+        const posicaoX_heroiLocal = this.nomeUsuario === this.criador ? 400 : 1500;
+        const posicaoX_heroiOponente = this.nomeUsuario === this.criador ? 1500 : 400;
+
+        this.player_1 = new Player(this, posicaoX_heroiLocal, 200, heroiLocal,    heroiLocal,    1); // P1
+        this.player_2 = new Player(this, posicaoX_heroiOponente, 200, heroiOponente, heroiOponente, 1); // P2
         this.player_2.setAlpha(0);
 
         this.physics.add.collider(this.player_1, this._chao);
@@ -110,15 +115,19 @@ class GameScene extends Phaser.Scene {
         if (this._partidaEncerrada) return;
 
         this.player_1.update(this.teclado);
-
+        
+        
+            
         // Checa colisão: hitbox corpo a corpo do P1 vs P2
         this._checarAtaqueCaC();
-
+        
         // Checa colisão: flechas do P1 vs corpo do P2
         this._checarFlechas();
+        
+        this._enviarPosicao();
+        
 
         this._atualizarHUD();
-        this._enviarPosicao();
         this._checarFimDePartida();
     }
 
@@ -128,7 +137,8 @@ class GameScene extends Phaser.Scene {
         if (this.player_2.alpha === 0)         return;
 
         const r1 = this.player_1.hitboxAtaque.getBounds();
-        const r2 = this.player_2.getBounds();
+        const p2Body = this.player_2.body;
+        const r2 = new Phaser.Geom.Rectangle(p2Body.x, p2Body.y, p2Body.width, p2Body.height);
 
         if (Phaser.Geom.Intersects.RectangleToRectangle(r1, r2)) {
             this.player_1.hitboxAtaque.ativa = false;
@@ -142,7 +152,8 @@ class GameScene extends Phaser.Scene {
     _checarFlechas() {
         if (this.player_2.alpha === 0) return;
 
-        const alvoBounds = this.player_2.getBounds();
+        const p2Body = this.player_2.body;
+        const alvoBounds = new Phaser.Geom.Rectangle(p2Body.x, p2Body.y, p2Body.width, p2Body.height);
 
         this.player_1.flechas.getChildren().forEach((flecha) => {
             if (!flecha.active) return;
@@ -247,6 +258,9 @@ class GameScene extends Phaser.Scene {
     _registrarEventosSocket() {
         socket.off('posicaoOponente');
         socket.on('posicaoOponente', (dados) => {
+
+            if (this._partidaEncerrada) return;
+
             this.player_2.setAlpha(1);
             this.player_2.setFlipX(dados.flipX)
             this.player_2.updateDirections_oponente(dados.x, this.player_2.x);
@@ -328,7 +342,9 @@ class GameScene extends Phaser.Scene {
 
         // evento que aviasa quando o oponente esta pronto
         socket.off('oponentePronto');
-        socket.on('oponentePronto', () => console.log('Oponente entrou!'));
+        socket.on('oponentePronto', () => {
+            console.log('Oponente entrou!');
+        });
         
         
         
@@ -342,6 +358,14 @@ class GameScene extends Phaser.Scene {
         // evento para que quando o jogador apertar em voltar, ele volte para o lobby, 
         socket.off('voltarLobby');
         socket.on('voltarLobby', (sala) => {
+
+            if (!sala) 
+            {
+                // Prevenção de segurança caso o servidor mande o objeto da sala vazio
+                console.error("Erro: Dados da sala não recebidos ao voltar para o Lobby.");
+                this.scene.start('MainMenu'); // Redireciona para o menu principal de segurança
+                return;
+            }
 
             sala.nomeUsuario = this.nomeUsuario;
 
@@ -369,6 +393,7 @@ class GameScene extends Phaser.Scene {
     _encerrarPartida(msg, vitoria) {
         this._partidaEncerrada = true;
         this.physics.pause();
+        this.input.keyboard.shutdown();
         this._stopMusic();
 
         this.add.rectangle(960, 540, 1920, 1080, 0x000000, 0.65)

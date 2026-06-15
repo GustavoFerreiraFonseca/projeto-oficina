@@ -115,7 +115,8 @@ class Lobby extends Phaser.Scene {
             this.scene.start('gameScene', { 
                 salaId: this.salaAtual.id, 
                 nomeUsuario: this.nomeUsuario,
-                jogadoresDados: this.jogadoresDados
+                jogadoresDados: this.jogadoresDados,
+                criador: this.criador
             });
         });
 
